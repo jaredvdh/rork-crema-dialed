@@ -12,6 +12,8 @@ import UIKit
 
 struct CafeDetailView: View {
     @Bindable var cafe: Cafe
+    /// Begin a check-in for this café.
+    var onCheckIn: () -> Void = {}
 
     @State private var viewerPhoto: PhotoItem?
 
@@ -19,10 +21,10 @@ struct CafeDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
+            VStack(spacing: 20) {
                 hero
-                statRow
                 actionRow
+                if cafe.hasVisited { historyCard }
                 if !cafe.allPhotos.isEmpty { photoGallery }
                 notesCard
                 mapCard
@@ -33,6 +35,26 @@ struct CafeDetailView: View {
         .background(CremaColor.background)
         .navigationTitle(cafe.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if !cafe.hasVisited {
+                    Button {
+                        HapticEngine.selection()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { cafe.wantToVisit.toggle() }
+                    } label: {
+                        Image(systemName: cafe.wantToVisit ? "bookmark.fill" : "bookmark")
+                            .foregroundStyle(cafe.wantToVisit ? CremaColor.caramel : CremaColor.espresso)
+                    }
+                }
+                Button {
+                    HapticEngine.selection()
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { cafe.isFavourite.toggle() }
+                } label: {
+                    Image(systemName: cafe.isFavourite ? "heart.fill" : "heart")
+                        .foregroundStyle(cafe.isFavourite ? CremaColor.negative : CremaColor.espresso)
+                }
+            }
+        }
         .fullScreenCover(item: $viewerPhoto) { item in
             PhotoViewer(data: item.data) { viewerPhoto = nil }
         }
@@ -56,7 +78,7 @@ struct CafeDetailView: View {
                     .allowsHitTesting(false)
             }
             .overlay(alignment: .bottomLeading) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 5) {
                     if cafe.isFavourite {
                         Label("Favourite", systemImage: "heart.fill")
                             .font(.crema(11, .bold))
@@ -66,12 +88,22 @@ struct CafeDetailView: View {
                             .clipShape(Capsule())
                     }
                     Text(cafe.name)
-                        .font(.crema(26, .bold))
+                        .font(.crema(28, .bold))
                         .foregroundStyle(.white)
-                    if !cafe.city.isEmpty {
-                        Label(cafe.city, systemImage: "mappin.and.ellipse")
-                            .font(.crema(13, .semibold))
-                            .foregroundStyle(.white.opacity(0.9))
+                    HStack(spacing: 12) {
+                        if !cafe.city.isEmpty {
+                            Label(cafe.city, systemImage: "mappin.and.ellipse")
+                                .font(.crema(13, .semibold))
+                                .foregroundStyle(.white.opacity(0.9))
+                        }
+                        if cafe.hasVisited {
+                            Label(String(format: "%.1f", cafe.averageRating), systemImage: "cup.and.saucer.fill")
+                                .font(.crema(13, .bold))
+                                .foregroundStyle(CremaColor.background)
+                                .padding(.horizontal, 9).padding(.vertical, 4)
+                                .background(CremaColorTintForScore(cafe.averageRating))
+                                .clipShape(Capsule())
+                        }
                     }
                 }
                 .padding(20)
@@ -79,72 +111,85 @@ struct CafeDetailView: View {
             .ignoresSafeArea(edges: .top)
     }
 
-    // MARK: Stats
-
-    private var statRow: some View {
-        CremaCard {
-            HStack(spacing: 0) {
-                stat(cafe.hasVisited ? String(format: "%.1f", cafe.averageRating) : "—", "RATING", CremaColor.crema)
-                divider
-                stat("\(cafe.visits.count)", "VISITS", CremaColor.espresso)
-                divider
-                stat(cafe.favouriteDrink?.rawValue ?? "—", "FAVOURITE", CremaColor.caramel, small: true)
-            }
-        }
-        .padding(.horizontal, 16)
-    }
-
-    private func stat(_ value: String, _ label: String, _ tint: Color, small: Bool = false) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
-                .font(.crema(small ? 16 : 26, .bold))
-                .foregroundStyle(tint)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(label)
-                .font(.crema(10, .semibold))
-                .foregroundStyle(CremaColor.textTertiary)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(minHeight: 40)
-    }
-
-    private var divider: some View {
-        Rectangle().fill(CremaColor.separator).frame(width: 1, height: 36)
-    }
-
     // MARK: Actions
 
     private var actionRow: some View {
         HStack(spacing: 12) {
-            toggleButton(title: cafe.isFavourite ? "Favourited" : "Favourite",
-                         symbol: cafe.isFavourite ? "heart.fill" : "heart",
-                         active: cafe.isFavourite, tint: CremaColor.negative) {
-                cafe.isFavourite.toggle()
+            Button {
+                HapticEngine.tap()
+                MapsLauncher.directions(to: cafe.coordinate, name: cafe.name)
+            } label: {
+                Label("Directions", systemImage: "location.north.line.fill")
+                    .font(.crema(15, .bold))
+                    .foregroundStyle(CremaColor.espresso)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(CremaColor.espresso.opacity(0.12))
+                    .clipShape(.rect(cornerRadius: CremaRadius.field))
             }
-            toggleButton(title: cafe.wantToVisit ? "On Wishlist" : "Want to Visit",
-                         symbol: cafe.wantToVisit ? "bookmark.fill" : "bookmark",
-                         active: cafe.wantToVisit, tint: CremaColor.caramel) {
-                cafe.wantToVisit.toggle()
+            .buttonStyle(PressableStyle())
+
+            Button {
+                HapticEngine.tap()
+                onCheckIn()
+            } label: {
+                Label("Check In", systemImage: "cup.and.saucer.fill")
+                    .font(.crema(15, .bold))
+                    .foregroundStyle(CremaColor.background)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        LinearGradient(colors: [CremaColor.espresso, CremaColor.caramel],
+                                       startPoint: .leading, endPoint: .trailing)
+                    )
+                    .clipShape(.rect(cornerRadius: CremaRadius.field))
+            }
+            .buttonStyle(PressableStyle())
+        }
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: Your history
+
+    private var historyCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader("Your History")
+            CremaCard {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                    historyStat("\(cafe.visits.count)", "Total Visits", "arrow.triangle.2.circlepath", CremaColor.espresso)
+                    historyStat(String(format: "%.1f", cafe.averageRating), "Average Rating", "cup.and.saucer.fill", CremaColor.crema)
+                    historyStat(cafe.favouriteDrink?.rawValue ?? "—", "Favourite Drink", "heart.fill", CremaColor.caramel)
+                    historyStat(lastVisitLabel, "Last Visit", "calendar", CremaColor.positive)
+                }
             }
         }
         .padding(.horizontal, 16)
     }
 
-    private func toggleButton(title: String, symbol: String, active: Bool, tint: Color, action: @escaping () -> Void) -> some View {
-        Button {
-            HapticEngine.selection()
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { action() }
-        } label: {
-            Label(title, systemImage: symbol)
-                .font(.crema(14, .bold))
-                .foregroundStyle(active ? CremaColor.background : tint)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(active ? tint : tint.opacity(0.12))
-                .clipShape(.rect(cornerRadius: CremaRadius.field))
+    private var lastVisitLabel: String {
+        guard let last = cafe.lastVisit else { return "—" }
+        return last.formatted(.relative(presentation: .named))
+    }
+
+    private func historyStat(_ value: String, _ label: String, _ icon: String, _ tint: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.crema(15, .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 26)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.crema(16, .bold))
+                    .foregroundStyle(CremaColor.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(label)
+                    .font(.crema(11, .medium))
+                    .foregroundStyle(CremaColor.textTertiary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
         }
-        .buttonStyle(PressableStyle())
     }
 
     // MARK: Photo gallery
@@ -234,13 +279,13 @@ struct CafeDetailView: View {
     private var journalSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             if !visits.isEmpty {
-                SectionHeader("Coffee Journal")
+                SectionHeader("Recent Check-Ins")
                 ForEach(visits) { visit in
                     MemoryCard(visit: visit) { data in viewerPhoto = PhotoItem(data: data) }
                 }
             } else {
                 CremaCard {
-                    Text("No check-ins yet — this café is on your wishlist. Check in to start your journal here.")
+                    Text("No check-ins yet. Tap Check In to start your coffee journal here.")
                         .font(.crema(14, .medium))
                         .foregroundStyle(CremaColor.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -249,6 +294,11 @@ struct CafeDetailView: View {
         }
         .padding(.horizontal, 16)
     }
+}
+
+/// Tint for a café's average score badge.
+private func CremaColorTintForScore(_ score: Double) -> Color {
+    CoffeeScoreStyle.tint(Int(score.rounded()))
 }
 
 /// A journal-style memory card for a single visit.
@@ -316,14 +366,14 @@ private struct MemoryCard: View {
 
                     if visit.usedAdvanced {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                            ratingPill("Coffee", visit.coffeeQuality)
-                            ratingPill("Milk", visit.milkQuality)
-                            ratingPill("Espresso", visit.extractionQuality)
-                            ratingPill("Temp", visit.temperature)
-                            ratingPill("Service", visit.service)
-                            ratingPill("Atmos", visit.atmosphere)
-                            ratingPill("Value", visit.value)
-                            ratingPill("Consist", visit.consistency)
+                            if visit.coffeeQuality > 0 { ratingPill("Coffee", visit.coffeeQuality) }
+                            if visit.milkQuality > 0 { ratingPill("Milk", visit.milkQuality) }
+                            if visit.extractionQuality > 0 { ratingPill("Espresso", visit.extractionQuality) }
+                            if visit.temperature > 0 { ratingPill("Temp", visit.temperature) }
+                            if visit.service > 0 { ratingPill("Service", visit.service) }
+                            if visit.atmosphere > 0 { ratingPill("Atmos", visit.atmosphere) }
+                            if visit.value > 0 { ratingPill("Value", visit.value) }
+                            if visit.consistency > 0 { ratingPill("Consist", visit.consistency) }
                             if visit.foodQuality > 0 { ratingPill("Food", visit.foodQuality) }
                         }
                     }

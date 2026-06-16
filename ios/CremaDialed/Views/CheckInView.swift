@@ -2,8 +2,8 @@
 //  CheckInView.swift
 //  CremaDialed
 //
-//  A premium, step-based café check-in that captures a coffee memory:
-//  choose café → select drink → capture photos → rate → quick impressions → save.
+//  A premium, guided café check-in that captures a coffee memory:
+//  confirm café → choose drink → quick rating → optional details → save.
 //
 
 import SwiftUI
@@ -11,14 +11,14 @@ import SwiftData
 import CoreLocation
 
 enum CheckInStep: Int, CaseIterable {
-    case drink, photos, rate, impressions
+    case confirm, drink, rate, details
 
     var title: String {
         switch self {
+        case .confirm: return "Confirm Café"
         case .drink: return "What did you drink?"
-        case .photos: return "Capture the moment"
-        case .rate: return "How was it?"
-        case .impressions: return "Quick impressions"
+        case .rate: return "Quick rating"
+        case .details: return "Optional details"
         }
     }
 }
@@ -26,54 +26,57 @@ enum CheckInStep: Int, CaseIterable {
 struct CheckInView: View {
     var location: CafeLocationService
     var existingCafes: [Cafe]
+    var preselectedResult: CafeResult? = nil
+    var preselectedCafe: Cafe? = nil
     var onSave: (Cafe, CafeVisit) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var picked: CafeResult?
     @State private var pickedExisting: Cafe?
-    @State private var step: CheckInStep = .drink
+    @State private var step: CheckInStep = .confirm
 
     @State private var drink: CoffeeDrink = .flatWhite
     @State private var galleryPhotos: [GalleryPhoto] = []
     @State private var coffeeScore = 8
     @State private var wouldReturn = false
-    @State private var coffeeTags: [String] = []
-    @State private var venueTags: [String] = []
     @State private var notes = ""
 
-    // Optional detailed review.
-    @State private var showAdvanced = false
+    // Optional detailed review (Coffee Quality / Service / Atmosphere / Value).
+    @State private var showDetails = false
     @State private var usedAdvanced = false
-    @State private var coffee = 8
-    @State private var milk = 7
-    @State private var extraction = 8
-    @State private var temperature = 7
-    @State private var value = 7
-    @State private var atmosphere = 8
+    @State private var coffeeQuality = 8
     @State private var service = 8
-    @State private var consistency = 7
-    @State private var food = 0
+    @State private var atmosphere = 8
+    @State private var value = 7
+
+    @State private var showSuccess = false
 
     private var hasCafe: Bool { picked != nil || pickedExisting != nil }
     private var cafeName: String { picked?.name ?? pickedExisting?.name ?? "" }
     private var cafeSubtitle: String {
-        picked.map { [$0.address, $0.city].filter { !$0.isEmpty }.joined(separator: ", ") }
-            ?? pickedExisting?.city ?? ""
+        if let picked { return [picked.address, picked.city].filter { !$0.isEmpty }.joined(separator: ", ") }
+        if let pickedExisting { return [pickedExisting.address, pickedExisting.city].filter { !$0.isEmpty }.joined(separator: ", ") }
+        return ""
     }
+    private var cafeDistance: String? { picked?.distanceLabel }
+    private var cafeCover: Data? { (picked != nil ? matchingCafe(for: picked!, in: existingCafes)?.coverPhoto : pickedExisting?.coverPhoto) }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if hasCafe {
-                    flowBody
-                } else {
-                    CafePicker(location: location, existingCafes: existingCafes,
-                               onPickResult: { picked = $0 },
-                               onPickExisting: { pickedExisting = $0 })
+            ZStack {
+                CremaColor.background.ignoresSafeArea()
+                Group {
+                    if hasCafe {
+                        flowBody
+                    } else {
+                        CafePicker(location: location, existingCafes: existingCafes,
+                                   onPickResult: { picked = $0 },
+                                   onPickExisting: { pickedExisting = $0 })
+                    }
                 }
+                if showSuccess { successOverlay }
             }
-            .background(CremaColor.background)
             .navigationTitle(hasCafe ? "Check In" : "Find a Café")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -82,25 +85,31 @@ struct CheckInView: View {
                 }
             }
         }
+        .onAppear {
+            if let preselectedResult { picked = preselectedResult }
+            else if let preselectedCafe { pickedExisting = preselectedCafe }
+        }
     }
 
     // MARK: Flow
 
     private var flowBody: some View {
         VStack(spacing: 0) {
-            header
+            progressBar
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(step.title)
                         .font(.crema(28, .bold))
                         .foregroundStyle(CremaColor.textPrimary)
-                        .padding(.top, 4)
+                        .padding(.top, 6)
 
                     switch step {
+                    case .confirm: confirmStep
                     case .drink: drinkStep
-                    case .photos: photoStep
                     case .rate: rateStep
-                    case .impressions: impressionStep
+                    case .details: detailsStep
                     }
                 }
                 .padding(20)
@@ -109,39 +118,6 @@ struct CheckInView: View {
             .scrollDismissesKeyboard(.interactively)
             bottomBar
         }
-    }
-
-    private var header: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                CafeCover(data: (pickedExisting?.coverPhoto) ?? nil, size: 40, corner: 11)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(cafeName)
-                        .font(.crema(16, .bold))
-                        .foregroundStyle(CremaColor.textPrimary)
-                        .lineLimit(1)
-                    if !cafeSubtitle.isEmpty {
-                        Text(cafeSubtitle)
-                            .font(.crema(12, .medium))
-                            .foregroundStyle(CremaColor.textSecondary)
-                            .lineLimit(1)
-                    }
-                }
-                Spacer()
-                Button {
-                    HapticEngine.light()
-                    picked = nil; pickedExisting = nil; step = .drink
-                } label: {
-                    Text("Change")
-                        .font(.crema(13, .semibold))
-                        .foregroundStyle(CremaColor.espresso)
-                }
-            }
-            progressBar
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
     }
 
     private var progressBar: some View {
@@ -157,21 +133,64 @@ struct CheckInView: View {
 
     // MARK: Steps
 
+    private var confirmStep: some View {
+        VStack(spacing: 16) {
+            Color(.secondarySystemBackground)
+                .frame(height: 170)
+                .overlay {
+                    if let data = cafeCover, let image = UIImage(data: data) {
+                        Image(uiImage: image).resizable().aspectRatio(contentMode: .fill).allowsHitTesting(false)
+                    } else {
+                        LinearGradient(colors: [CremaColor.espresso, CremaColor.caramel],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing)
+                            .overlay {
+                                Image(systemName: "cup.and.saucer.fill")
+                                    .font(.system(size: 44, weight: .bold))
+                                    .foregroundStyle(CremaColor.background.opacity(0.9))
+                            }
+                    }
+                }
+                .clipShape(.rect(cornerRadius: CremaRadius.card))
+
+            CremaCard {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(cafeName)
+                        .font(.crema(20, .bold))
+                        .foregroundStyle(CremaColor.textPrimary)
+                    if !cafeSubtitle.isEmpty {
+                        Label(cafeSubtitle, systemImage: "mappin.and.ellipse")
+                            .font(.crema(13, .medium))
+                            .foregroundStyle(CremaColor.textSecondary)
+                    }
+                    if let cafeDistance {
+                        Label(cafeDistance, systemImage: "location.fill")
+                            .font(.crema(13, .semibold))
+                            .foregroundStyle(CremaColor.caramel)
+                    }
+                }
+            }
+
+            Button {
+                HapticEngine.light()
+                picked = nil; pickedExisting = nil; step = .confirm
+            } label: {
+                Label("Choose a different café", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.crema(14, .semibold))
+                    .foregroundStyle(CremaColor.espresso)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(CremaColor.surface)
+                    .clipShape(.rect(cornerRadius: CremaRadius.field))
+            }
+            .buttonStyle(PressableStyle())
+        }
+    }
+
     private var drinkStep: some View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
             ForEach(CoffeeDrink.allCases) { d in
                 DrinkCard(drink: d, isSelected: drink == d) { drink = d }
             }
-        }
-    }
-
-    private var photoStep: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Photos are the heart of every memory. Add up to 10 — the first becomes your cover.")
-                .font(.crema(14, .medium))
-                .foregroundStyle(CremaColor.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-            PhotoGalleryEditor(photos: $galleryPhotos)
         }
     }
 
@@ -200,28 +219,58 @@ struct CheckInView: View {
                     .buttonStyle(PressableStyle())
                 }
             }
-            advancedRatingSection
+            Text("Keep it quick — you can add more detail below if you like.")
+                .font(.crema(13, .medium))
+                .foregroundStyle(CremaColor.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    private var impressionStep: some View {
+    private var detailsStep: some View {
         VStack(alignment: .leading, spacing: 20) {
+            // Photo
             VStack(alignment: .leading, spacing: 10) {
-                Text("COFFEE")
+                Text("PHOTO")
                     .font(.crema(11, .semibold))
                     .foregroundStyle(CremaColor.textTertiary)
-                TagCloud(options: CoffeeTag.allCases.map(\.rawValue), selected: $coffeeTags,
-                         tint: CremaColor.espresso)
+                PhotoGalleryEditor(photos: $galleryPhotos)
             }
-            VStack(alignment: .leading, spacing: 10) {
-                Text("THE VENUE")
-                    .font(.crema(11, .semibold))
-                    .foregroundStyle(CremaColor.textTertiary)
-                TagCloud(options: VenueTag.allCases.map(\.rawValue), selected: $venueTags,
-                         tint: CremaColor.caramel)
+
+            // Expandable rating dimensions
+            Button {
+                HapticEngine.light()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { showDetails.toggle() }
+            } label: {
+                HStack {
+                    Image(systemName: "slider.horizontal.3")
+                    Text(showDetails ? "Hide ratings" : "Rate quality, service, atmosphere & value")
+                    Spacer()
+                    Image(systemName: "chevron.down").rotationEffect(.degrees(showDetails ? 180 : 0))
+                }
+                .font(.crema(14, .semibold))
+                .foregroundStyle(CremaColor.espresso)
+                .padding(16)
+                .background(CremaColor.card)
+                .clipShape(.rect(cornerRadius: CremaRadius.field))
+                .overlay(RoundedRectangle(cornerRadius: CremaRadius.field).stroke(CremaColor.separator, lineWidth: 0.5))
             }
+            .buttonStyle(PressableStyle())
+
+            if showDetails {
+                CremaCard {
+                    VStack(spacing: 14) {
+                        TasteSlider(label: "Coffee Quality", value: advBinding($coffeeQuality))
+                        TasteSlider(label: "Service", value: advBinding($service))
+                        TasteSlider(label: "Atmosphere", value: advBinding($atmosphere))
+                        TasteSlider(label: "Value", value: advBinding($value))
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            // Notes
             VStack(alignment: .leading, spacing: 10) {
-                Text("NOTES (OPTIONAL)")
+                Text("NOTES")
                     .font(.crema(11, .semibold))
                     .foregroundStyle(CremaColor.textTertiary)
                 TextField("Best flat white I've had in months…", text: $notes, axis: .vertical)
@@ -236,46 +285,6 @@ struct CheckInView: View {
         }
     }
 
-    private var advancedRatingSection: some View {
-        VStack(spacing: 16) {
-            Button {
-                HapticEngine.light()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { showAdvanced.toggle() }
-            } label: {
-                HStack {
-                    Image(systemName: "slider.horizontal.3")
-                    Text(showAdvanced ? "Hide Detailed Review" : "Show Detailed Review")
-                    Spacer()
-                    Image(systemName: "chevron.down").rotationEffect(.degrees(showAdvanced ? 180 : 0))
-                }
-                .font(.crema(15, .semibold))
-                .foregroundStyle(CremaColor.espresso)
-                .padding(16)
-                .background(CremaColor.card)
-                .clipShape(.rect(cornerRadius: CremaRadius.field))
-                .overlay(RoundedRectangle(cornerRadius: CremaRadius.field).stroke(CremaColor.separator, lineWidth: 0.5))
-            }
-            .buttonStyle(PressableStyle())
-
-            if showAdvanced {
-                CremaCard {
-                    VStack(spacing: 14) {
-                        TasteSlider(label: "Coffee Flavour", value: advBinding($coffee))
-                        TasteSlider(label: "Milk Texture", value: advBinding($milk))
-                        TasteSlider(label: "Espresso Quality", value: advBinding($extraction))
-                        TasteSlider(label: "Temperature", value: advBinding($temperature))
-                        TasteSlider(label: "Service", value: advBinding($service))
-                        TasteSlider(label: "Atmosphere", value: advBinding($atmosphere))
-                        TasteSlider(label: "Value", value: advBinding($value))
-                        TasteSlider(label: "Consistency", value: advBinding($consistency))
-                        TasteSlider(label: "Food / Pastry", value: advBinding($food))
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-    }
-
     private func advBinding(_ source: Binding<Int>) -> Binding<Int> {
         Binding(get: { max(1, source.wrappedValue) },
                 set: { usedAdvanced = true; source.wrappedValue = $0 })
@@ -285,7 +294,7 @@ struct CheckInView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 12) {
-            if step != .drink {
+            if step != .confirm {
                 Button {
                     HapticEngine.light()
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { goBack() }
@@ -301,15 +310,15 @@ struct CheckInView: View {
             }
             Button {
                 HapticEngine.tap()
-                if step == .impressions {
+                if step == .details {
                     save()
                 } else {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { goNext() }
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Text(step == .impressions ? "Save Memory" : "Continue")
-                    Image(systemName: step == .impressions ? "checkmark" : "chevron.right")
+                    Text(step == .details ? "Save to Passport" : "Continue")
+                    Image(systemName: step == .details ? "checkmark" : "chevron.right")
                 }
                 .font(.crema(17, .bold))
                 .frame(maxWidth: .infinity)
@@ -336,6 +345,27 @@ struct CheckInView: View {
         if let prev = CheckInStep(rawValue: step.rawValue - 1) { step = prev }
     }
 
+    // MARK: Success overlay
+
+    private var successOverlay: some View {
+        ZStack {
+            CremaColor.background.opacity(0.96).ignoresSafeArea()
+            VStack(spacing: 16) {
+                Text("☕")
+                    .font(.system(size: 72))
+                    .scaleEffect(showSuccess ? 1 : 0.4)
+                    .animation(.spring(response: 0.45, dampingFraction: 0.55), value: showSuccess)
+                Text("Added to Coffee Passport")
+                    .font(.crema(20, .bold))
+                    .foregroundStyle(CremaColor.textPrimary)
+                Text(cafeName)
+                    .font(.crema(14, .medium))
+                    .foregroundStyle(CremaColor.textSecondary)
+            }
+        }
+        .transition(.opacity)
+    }
+
     // MARK: Save
 
     private func save() {
@@ -359,17 +389,21 @@ struct CheckInView: View {
             photoCaptions: galleryPhotos.map(\.caption),
             coverIndex: 0,
             coffeeScore: coffeeScore,
-            coffeeTags: coffeeTags,
-            venueTags: venueTags,
+            coffeeTags: [],
+            venueTags: [],
             overallRating: coffeeScore,
             wouldReturn: wouldReturn,
             usedAdvanced: usedAdvanced,
-            coffeeQuality: coffee, milkQuality: milk, extractionQuality: extraction,
-            temperature: temperature, value: value, atmosphere: atmosphere,
-            service: service, consistency: consistency, foodQuality: food)
+            coffeeQuality: coffeeQuality, milkQuality: 0, extractionQuality: 0,
+            temperature: 0, value: value, atmosphere: atmosphere,
+            service: service, consistency: 0, foodQuality: 0)
         onSave(cafe, visit)
         HapticEngine.success()
-        dismiss()
+        withAnimation(.easeOut(duration: 0.25)) { showSuccess = true }
+        Task {
+            try? await Task.sleep(for: .seconds(1.1))
+            dismiss()
+        }
     }
 }
 

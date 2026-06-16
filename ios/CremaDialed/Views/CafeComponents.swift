@@ -318,3 +318,145 @@ struct CafeFeatureCard: View {
             .overlay(RoundedRectangle(cornerRadius: CremaRadius.card).stroke(CremaColor.separator, lineWidth: 0.5))
     }
 }
+
+// MARK: - Nearby discovery card
+
+/// A discovery card for a café found nearby. Surfaces distance, an optional
+/// personal rating + favourite indicator (when the café has been visited
+/// before), and primary Directions / Check In actions plus View Details.
+struct NearbyCafeCard: View {
+    let result: CafeResult
+    /// The matching saved café, if the user has visited or saved it before.
+    let saved: Cafe?
+    let onDirections: () -> Void
+    let onCheckIn: () -> Void
+    let onDetails: () -> Void
+
+    private var subtitle: String {
+        var parts: [String] = []
+        if let label = result.distanceLabel { parts.append(label) }
+        let place = [result.address, result.city].filter { !$0.isEmpty }.joined(separator: ", ")
+        if !place.isEmpty { parts.append(place) }
+        return parts.joined(separator: "  ·  ")
+    }
+
+    var body: some View {
+        CremaCard(padding: 12) {
+            VStack(spacing: 14) {
+                Button(action: { HapticEngine.tap(); onDetails() }) {
+                    HStack(spacing: 12) {
+                        CafeCover(data: saved?.coverPhoto, size: 58, corner: 14)
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 6) {
+                                Text(result.name)
+                                    .font(.crema(16, .bold))
+                                    .foregroundStyle(CremaColor.textPrimary)
+                                    .lineLimit(1)
+                                if saved?.isFavourite == true {
+                                    Image(systemName: "heart.fill")
+                                        .font(.crema(11))
+                                        .foregroundStyle(CremaColor.negative)
+                                }
+                            }
+                            if !subtitle.isEmpty {
+                                Text(subtitle)
+                                    .font(.crema(12, .medium))
+                                    .foregroundStyle(CremaColor.textSecondary)
+                                    .lineLimit(1)
+                            }
+                            if let saved, saved.hasVisited {
+                                Text("You· \(saved.visits.count) visit\(saved.visits.count == 1 ? "" : "s")")
+                                    .font(.crema(11, .semibold))
+                                    .foregroundStyle(CremaColor.caramel)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                        if let saved, saved.hasVisited {
+                            CoffeeScoreBadge(score: saved.averageRating, size: 15)
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.crema(13, .semibold))
+                            .foregroundStyle(CremaColor.textTertiary)
+                    }
+                }
+                .buttonStyle(PressableStyle())
+
+                HStack(spacing: 10) {
+                    cardAction("Directions", "location.north.line.fill", filled: false, action: onDirections)
+                    cardAction("Check In", "cup.and.saucer.fill", filled: true, action: onCheckIn)
+                }
+            }
+        }
+    }
+
+    private func cardAction(_ title: String, _ symbol: String, filled: Bool, action: @escaping () -> Void) -> some View {
+        Button { HapticEngine.tap(); action() } label: {
+            Label(title, systemImage: symbol)
+                .font(.crema(14, .bold))
+                .foregroundStyle(filled ? CremaColor.background : CremaColor.espresso)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background {
+                    if filled {
+                        LinearGradient(colors: [CremaColor.espresso, CremaColor.caramel],
+                                       startPoint: .leading, endPoint: .trailing)
+                    } else {
+                        CremaColor.espresso.opacity(0.12)
+                    }
+                }
+                .clipShape(.rect(cornerRadius: CremaRadius.field))
+        }
+        .buttonStyle(PressableStyle())
+    }
+}
+
+// MARK: - Swipe to delete
+
+/// A reusable container that reveals a destructive delete action when the
+/// content is swiped left — used for café check-ins in the Passport.
+struct SwipeToDelete<Content: View>: View {
+    var onDelete: () -> Void
+    @ViewBuilder var content: () -> Content
+
+    @State private var offset: CGFloat = 0
+    @State private var revealed = false
+    private let actionWidth: CGFloat = 84
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            Button(role: .destructive) {
+                HapticEngine.warning()
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0; revealed = false }
+                onDelete()
+            } label: {
+                Image(systemName: "trash.fill")
+                    .font(.crema(18, .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: actionWidth)
+                    .frame(maxHeight: .infinity)
+                    .background(CremaColor.negative)
+            }
+            .clipShape(.rect(cornerRadius: CremaRadius.card))
+
+            content()
+                .offset(x: offset)
+                .gesture(
+                    DragGesture(minimumDistance: 16)
+                        .onChanged { value in
+                            let base = revealed ? -actionWidth : 0
+                            let proposed = base + value.translation.width
+                            offset = min(0, max(proposed, -actionWidth - 24))
+                        }
+                        .onEnded { value in
+                            withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                                if value.translation.width < -40 || offset < -actionWidth / 2 {
+                                    offset = -actionWidth; revealed = true
+                                } else {
+                                    offset = 0; revealed = false
+                                }
+                            }
+                        }
+                )
+        }
+    }
+}

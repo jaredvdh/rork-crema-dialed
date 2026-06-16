@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 import MapKit
+import UIKit
 
 /// A lightweight value describing a café found via MapKit search.
 struct CafeResult: Identifiable, Hashable {
@@ -231,5 +232,28 @@ final class CafeLocationService: NSObject, CLLocationManagerDelegate {
             )
         }
         return results.sorted { ($0.distance ?? .greatestFiniteMagnitude) < ($1.distance ?? .greatestFiniteMagnitude) }
+    }
+}
+
+/// Launches Apple Maps with turn-by-turn directions to a coordinate.
+enum MapsLauncher {
+    static func directions(to coordinate: CLLocationCoordinate2D, name: String) {
+        let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+        item.name = name.isEmpty ? "Café" : name
+        item.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault
+        ])
+    }
+}
+
+/// Finds the saved café that corresponds to a discovered search result, if any
+/// (same name within ~120m), so Nearby cards can surface personal ratings.
+func matchingCafe(for result: CafeResult, in cafes: [Cafe]) -> Cafe? {
+    let key = result.name.lowercased().trimmingCharacters(in: .whitespaces)
+    return cafes.first { cafe in
+        guard cafe.name.lowercased().trimmingCharacters(in: .whitespaces) == key else { return false }
+        let a = CLLocation(latitude: cafe.latitude, longitude: cafe.longitude)
+        let b = CLLocation(latitude: result.coordinate.latitude, longitude: result.coordinate.longitude)
+        return a.distance(from: b) < 120
     }
 }
