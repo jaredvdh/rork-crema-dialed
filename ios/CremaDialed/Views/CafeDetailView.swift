@@ -190,17 +190,43 @@ struct CafeDetailView: View {
     // MARK: Map
 
     private var mapCard: some View {
-        Map(initialPosition: .region(MKCoordinateRegion(
-            center: cafe.coordinate,
-            latitudinalMeters: 600, longitudinalMeters: 600
-        ))) {
-            Marker(cafe.name, systemImage: "cup.and.saucer.fill", coordinate: cafe.coordinate)
-                .tint(CremaColor.espresso)
+        VStack(spacing: 12) {
+            Map(initialPosition: .region(MKCoordinateRegion(
+                center: cafe.coordinate,
+                latitudinalMeters: 600, longitudinalMeters: 600
+            ))) {
+                Marker(cafe.name, systemImage: "cup.and.saucer.fill", coordinate: cafe.coordinate)
+                    .tint(CremaColor.espresso)
+            }
+            .frame(height: 160)
+            .clipShape(.rect(cornerRadius: CremaRadius.card))
+            .allowsHitTesting(false)
+
+            Button {
+                HapticEngine.tap()
+                openInMaps()
+            } label: {
+                Label("Directions", systemImage: "location.north.line.fill")
+                    .font(.crema(15, .bold))
+                    .foregroundStyle(CremaColor.background)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(CremaColor.espresso)
+                    .clipShape(.rect(cornerRadius: CremaRadius.field))
+            }
+            .buttonStyle(PressableStyle())
         }
-        .frame(height: 160)
-        .clipShape(.rect(cornerRadius: CremaRadius.card))
-        .allowsHitTesting(false)
         .padding(.horizontal, 16)
+    }
+
+    /// Opens Apple Maps with directions to this café from the user's current location.
+    private func openInMaps() {
+        let placemark = MKPlacemark(coordinate: cafe.coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = cafe.name
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault
+        ])
     }
 
     // MARK: Journal
