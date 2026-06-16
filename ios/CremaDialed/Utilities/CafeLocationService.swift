@@ -103,22 +103,85 @@ final class CafeLocationService: NSObject, CLLocationManagerDelegate {
     // MARK: Search
 
     /// Find cafés around the user's current location, sorted by distance.
-    /// Strictly limited to coffee points of interest so fast food and general
-    /// retail never break the experience.
+    ///
+    /// A single MapKit POI request filtered to `.cafe` misses a lot of real
+    /// coffee shops — many are tagged as bakeries, restaurants, or carry no
+    /// category at all, and some only ever surface through a text search. To
+    /// make discovery reliable we run several strategies concurrently and merge
+    /// the results:
+    ///   1. A POI request including café + bakery + restaurant categories.
+    ///   2. Natural-language searches for "coffee" and "espresso" near the user.
+    /// Everything is de-duplicated and filtered down to genuine coffee venues.
     func searchNearbyCafes() async {
         guard let center = userLocation else { return }
         isSearching = true
         errorMessage = nil
-        let request = MKLocalPointsOfInterestRequest(center: center, radius: 4000)
-        request.pointOfInterestFilter = MKPointOfInterestFilter(including: [.cafe])
-        do {
-            let response = try await MKLocalSearch(request: request).start()
-            let mapped = mapResults(response.mapItems, from: center)
-            nearby = mapped.filter { $0.isCoffeePlace }
-        } catch {
+
+        let radius: CLLocationDistance = 5000
+        let region = MKCoordinateRegion(center: center,
+                                        latitudinalMeters: radius * 2,
+                                        longitudinalMeters: radius * 2)
+
+        async let poiResults = runPOISearch(center: center, radius: radius)
+        async let coffeeResults = runQuerySearch("coffee", region: region, from: center)
+        async let espressoResults = runQuerySearch("espresso", region: region, from: center)
+
+        let combined = await (poiResults + coffeeResults + espressoResults)
+        let coffeeOnly = combined.filter { $0.isCoffeePlace && ($0.distance ?? .greatestFiniteMagnitude) <= radius * 1.5 }
+        let merged = deduplicate(coffeeOnly)
+
+        if merged.isEmpty && combined.isEmpty {
             errorMessage = "Couldn't load nearby cafés."
         }
+        nearby = merged
         isSearching = false
+    }
+
+    /// MapKit points-of-interest request across the categories coffee venues
+    /// commonly fall under.
+    private func runPOISearch(center: CLLocationCoordinate2D, radius: CLLocationDistance) async -> [CafeResult] {
+        let request = MKLocalPointsOfInterestRequest(center: center, radius: radius)
+        request.pointOfInterestFilter = MKPointOfInterestFilter(including: [.cafe, .bakery, .restaurant])
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            return mapResults(response.mapItems, from: center)
+        } catch {
+            return []
+        }
+    }
+
+    /// Natural-language MapKit search constrained to the user's region.
+    private func runQuerySearch(_ query: String, region: MKCoordinateRegion, from center: CLLocationCoordinate2D) async -> [CafeResult] {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        request.region = region
+        request.resultTypes = .pointOfInterest
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            return mapResults(response.mapItems, from: center)
+        } catch {
+            return []
+        }
+    }
+
+    /// Collapse results that point at the same venue (same name within ~50m),
+    /// keeping the closest instance, then sort by distance.
+    private func deduplicate(_ results: [CafeResult]) -> [CafeResult] {
+        var unique: [CafeResult] = []
+        for result in results.sorted(by: { ($0.distance ?? .greatestFiniteMagnitude) < ($1.distance ?? .greatestFiniteMagnitude) }) {
+            let key = result.name.lowercased().trimmingCharacters(in: .whitespaces)
+            let isDuplicate = unique.contains { existing in
+                existing.name.lowercased().trimmingCharacters(in: .whitespaces) == key &&
+                Self.metresBetween(existing.coordinate, result.coordinate) < 50
+            }
+            if !isDuplicate { unique.append(result) }
+        }
+        return unique
+    }
+
+    private static func metresBetween(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> CLLocationDistance {
+        CLLocation(latitude: a.latitude, longitude: a.longitude)
+            .distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude))
     }
 
     /// Search any café globally by text query. Coffee venues are surfaced first,
