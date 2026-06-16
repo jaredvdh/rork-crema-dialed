@@ -225,7 +225,7 @@ struct CafeListRow: View {
                         .foregroundStyle(CremaColor.textSecondary)
                         .lineLimit(1)
                     if let drink = cafe.favouriteDrink {
-                        Text("Loves the \(drink.rawValue.lowercased())")
+                        Text("Most ordered: \(drink.rawValue)")
                             .font(.crema(11, .medium))
                             .foregroundStyle(CremaColor.caramel)
                             .lineLimit(1)
@@ -332,12 +332,16 @@ struct NearbyCafeCard: View {
     let onCheckIn: () -> Void
     let onDetails: () -> Void
 
-    private var subtitle: String {
-        var parts: [String] = []
-        if let label = result.distanceLabel { parts.append(label) }
-        let place = [result.address, result.city].filter { !$0.isEmpty }.joined(separator: ", ")
-        if !place.isEmpty { parts.append(place) }
-        return parts.joined(separator: "  ·  ")
+    /// Personal information first (rating · visits), then location details.
+    private var personalLine: String? {
+        guard let saved, saved.hasVisited else { return nil }
+        let rating = String(format: "%.1f", saved.averageRating)
+        let visits = "\(saved.visits.count) visit\(saved.visits.count == 1 ? "" : "s")"
+        return "★ \(rating)  ·  \(visits)"
+    }
+
+    private var place: String {
+        [result.address, result.city].filter { !$0.isEmpty }.joined(separator: ", ")
     }
 
     var body: some View {
@@ -358,10 +362,23 @@ struct NearbyCafeCard: View {
                                         .foregroundStyle(CremaColor.negative)
                                 }
                             }
-                            if !subtitle.isEmpty {
-                                Text(subtitle)
-                                    .font(.crema(12, .medium))
+                            // Personal rating + visits lead the hierarchy.
+                            if let personalLine {
+                                Text(personalLine)
+                                    .font(.crema(12, .bold))
+                                    .foregroundStyle(CremaColor.caramel)
+                                    .lineLimit(1)
+                            }
+                            if let label = result.distanceLabel {
+                                Text(label)
+                                    .font(.crema(12, .semibold))
                                     .foregroundStyle(CremaColor.textSecondary)
+                                    .lineLimit(1)
+                            }
+                            if !place.isEmpty {
+                                Text(place)
+                                    .font(.crema(11, .medium))
+                                    .foregroundStyle(CremaColor.textTertiary)
                                     .lineLimit(1)
                             }
                             if let saved, saved.hasVisited {

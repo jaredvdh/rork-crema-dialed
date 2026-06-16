@@ -40,19 +40,47 @@ enum CremaSchemaV1: VersionedSchema {
     }
 }
 
+/// Version 2 adds an optional `beanID` to `CafeVisit`, linking a café check-in
+/// to one of the user's saved beans. Adding a new optional property is a
+/// lightweight migration SwiftData can perform automatically.
+enum CremaSchemaV2: VersionedSchema {
+    static var versionIdentifier = Schema.Version(2, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        [
+            Bean.self,
+            Machine.self,
+            Grinder.self,
+            Brew.self,
+            DialedRecipe.self,
+            MaintenanceLog.self,
+            MaintenanceReminder.self,
+            Cafe.self,
+            CafeVisit.self,
+        ]
+    }
+}
+
 /// The ordered list of schema versions and the migration stages that connect
-/// them. With a single version there are no stages yet, but the plan is wired
-/// up now so adding `CremaSchemaV2` later is a localised, safe change.
+/// them. Each version bump is paired with a stage so user data is migrated
+/// rather than destroyed.
 enum CremaMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [CremaSchemaV1.self]
+        [CremaSchemaV1.self, CremaSchemaV2.self]
     }
 
     static var stages: [MigrationStage] {
         // Add a `.lightweight` or `.custom` stage here for each future version
-        // bump — e.g. `migrateV1toV2`. Never leave a version bump without a stage.
-        []
+        // bump — e.g. `migrateV2toV3`. Never leave a version bump without a stage.
+        [migrateV1toV2]
     }
+
+    /// V1 → V2: adding the optional `CafeVisit.beanID` requires no data
+    /// transformation, so a lightweight stage suffices.
+    static let migrateV1toV2 = MigrationStage.lightweight(
+        fromVersion: CremaSchemaV1.self,
+        toVersion: CremaSchemaV2.self
+    )
 }
 
 enum CremaDataStore {
@@ -62,7 +90,7 @@ enum CremaDataStore {
     static let didResetStoreKey = "cremaDidResetLocalStore"
 
     /// The current schema, derived from the latest versioned schema.
-    static var currentSchema: Schema { Schema(versionedSchema: CremaSchemaV1.self) }
+    static var currentSchema: Schema { Schema(versionedSchema: CremaSchemaV2.self) }
 
     /// Build the shared container. Tries the migrating on-disk store first and
     /// only falls back to destructive recovery when the store genuinely cannot

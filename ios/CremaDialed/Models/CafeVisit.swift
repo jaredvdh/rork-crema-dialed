@@ -16,6 +16,9 @@ final class CafeVisit {
 
     var drinkRaw: String
     var notes: String
+    /// Optional link to one of the user's saved beans, connecting a café visit
+    /// to the coffee profile it was brewed from.
+    var beanID: UUID?
     var photosData: [Data]
     /// Optional caption per photo, parallel to `photosData`.
     var photoCaptions: [String]
@@ -49,6 +52,7 @@ final class CafeVisit {
         cafe: Cafe? = nil,
         drink: CoffeeDrink = .flatWhite,
         notes: String = "",
+        beanID: UUID? = nil,
         photosData: [Data] = [],
         photoCaptions: [String] = [],
         coverIndex: Int = 0,
@@ -73,6 +77,7 @@ final class CafeVisit {
         self.cafe = cafe
         self.drinkRaw = drink.rawValue
         self.notes = notes
+        self.beanID = beanID
         self.photosData = photosData
         self.photoCaptions = photoCaptions
         self.coverIndex = coverIndex

@@ -63,6 +63,16 @@ final class CafeLocationService: NSObject, CLLocationManagerDelegate {
         authorization == .denied || authorization == .restricted
     }
 
+    /// The closest discovered café when the user is within check-in range
+    /// (≈100m). Drives the contextual "Check In Nearby" prompt so a check-in
+    /// button only appears when the user has genuinely arrived somewhere.
+    var arrivedCafe: CafeResult? {
+        guard userLocation != nil else { return nil }
+        guard let closest = nearby.first,
+              let distance = closest.distance, distance <= 100 else { return nil }
+        return closest
+    }
+
     /// Ask for permission and, once granted, fetch the current location.
     func requestAndLocate() {
         switch authorization {

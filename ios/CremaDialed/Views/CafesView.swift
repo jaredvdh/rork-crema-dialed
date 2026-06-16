@@ -25,9 +25,15 @@ enum CafeSegment: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// Routes pushed from the Passport (beyond opening a specific café).
+enum PassportRoute: Hashable {
+    case map
+}
+
 struct CafesView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Cafe.createdAt, order: .reverse) private var cafes: [Cafe]
+    @Query(sort: \Bean.createdAt, order: .reverse) private var beans: [Bean]
 
     @State private var location = CafeLocationService()
     @State private var segment: CafeSegment = .nearby
@@ -54,23 +60,29 @@ struct CafesView: View {
                         PassportView(
                             cafes: cafes,
                             onCheckIn: { checkInRequest = CheckInRequest() },
-                            onDelete: deleteCafe
+                            onDelete: deleteCafe,
+                            onOpenMap: { path.append(PassportRoute.map) }
                         )
                     }
                 }
-
-                checkInButton
             }
             .navigationTitle(segment == .nearby ? "Find Coffee" : "Coffee Passport")
             .navigationDestination(for: UUID.self) { id in
                 if let cafe = cafes.first(where: { $0.id == id }) {
-                    CafeDetailView(cafe: cafe) { checkInRequest = CheckInRequest(existing: cafe) }
+                    CafeDetailView(cafe: cafe, beans: beans) { checkInRequest = CheckInRequest(existing: cafe) }
+                }
+            }
+            .navigationDestination(for: PassportRoute.self) { route in
+                switch route {
+                case .map:
+                    PassportMapScreen(cafes: cafes)
                 }
             }
             .sheet(item: $checkInRequest) { request in
                 CheckInView(
                     location: location,
                     existingCafes: cafes,
+                    beans: beans,
                     preselectedResult: request.result,
                     preselectedCafe: request.existing
                 ) { cafe, visit in
@@ -94,32 +106,6 @@ struct CafesView: View {
         .onChange(of: segment) { _, _ in HapticEngine.selection() }
     }
 
-    // MARK: Floating check-in button
-
-    private var checkInButton: some View {
-        VStack {
-            Spacer()
-            Button {
-                HapticEngine.tap()
-                checkInRequest = CheckInRequest()
-            } label: {
-                Label("Check In", systemImage: "cup.and.saucer.fill")
-                    .font(.crema(17, .bold))
-                    .foregroundStyle(CremaColor.background)
-                    .padding(.horizontal, 26)
-                    .padding(.vertical, 15)
-                    .background(
-                        LinearGradient(colors: [CremaColor.espresso, CremaColor.caramel],
-                                       startPoint: .leading, endPoint: .trailing)
-                    )
-                    .clipShape(Capsule())
-                    .shadow(color: CremaColor.espresso.opacity(0.35), radius: 12, y: 5)
-            }
-            .buttonStyle(PressableStyle())
-            .padding(.bottom, 16)
-        }
-    }
-
     // MARK: Helpers
 
     /// Returns the saved café for a discovered result, creating a lightweight
@@ -135,5 +121,30 @@ struct CafesView: View {
 
     private func deleteCafe(_ cafe: Cafe) {
         modelContext.delete(cafe)
+    }
+}
+
+/// A full-screen map of every café the user has visited — opened from the
+/// Passport's compact map preview.
+struct PassportMapScreen: View {
+    var cafes: [Cafe]
+    @State private var position: MapCameraPosition = .automatic
+
+    private var visited: [Cafe] { cafes.filter { $0.hasVisited } }
+
+    var body: some View {
+        Map(position: $position) {
+            ForEach(visited) { cafe in
+                Annotation(cafe.name, coordinate: cafe.coordinate) {
+                    NavigationLink(value: cafe.id) {
+                        CafeMapMarker(isFavourite: cafe.isFavourite)
+                    }
+                }
+            }
+        }
+        .mapControls { MapUserLocationButton() }
+        .ignoresSafeArea(edges: .bottom)
+        .navigationTitle("Coffee Map")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
