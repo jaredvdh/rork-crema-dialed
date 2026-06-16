@@ -6,7 +6,7 @@
       "path": "ios",
       "framework": "swift",
       "settings": {
-        "iosBundleId": "app.rork.5z7jr4n9mqp81gcndtqh7"
+        "iosBundleId": "com.jaredvdh.cremadialed"
       }
     }
   ]
