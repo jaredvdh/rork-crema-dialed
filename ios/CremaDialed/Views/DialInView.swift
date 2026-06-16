@@ -26,6 +26,7 @@ struct DialInView: View {
     @AppStorage("lastBasket") private var lastBasket: String = BasketSize.double.rawValue
     @AppStorage("defaultBasket") private var defaultBasket: String = BasketSize.double.rawValue
     @AppStorage(UnitPreferences.temperatureKey) private var tempUnitRaw: String = TemperatureUnit.celsius.rawValue
+    @AppStorage(UnitPreferences.weightKey) private var weightUnitRaw: String = WeightUnit.grams.rawValue
 
     @State private var selectedBean: Bean?
     @State private var selectedMachine: Machine?
@@ -74,6 +75,16 @@ struct DialInView: View {
 
     /// The user's chosen temperature unit. `waterTemp` is always stored in Celsius.
     private var tempUnit: TemperatureUnit { TemperatureUnit(rawValue: tempUnitRaw) ?? .celsius }
+
+    /// The user's chosen weight unit. `dose` and `yield` are always stored in grams.
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .grams }
+    /// Wraps a grams-stored value so `BigParam` can display/edit it in the user's unit.
+    private func weightBinding(_ source: Binding<Double>) -> Binding<Double> {
+        Binding(
+            get: { weightUnit == .grams ? source.wrappedValue : source.wrappedValue / UnitPreferences.gramsPerOunce },
+            set: { source.wrappedValue = weightUnit == .grams ? $0 : $0 * UnitPreferences.gramsPerOunce }
+        )
+    }
     private var waterTempBinding: Binding<Double> {
         Binding(
             get: { tempUnit == .celsius ? waterTemp : UnitPreferences.celsiusToFahrenheit(waterTemp) },
@@ -290,8 +301,14 @@ struct DialInView: View {
         VStack(spacing: 16) {
             basketPicker
             HStack(spacing: 12) {
-                BigParam(label: "DOSE", unit: "g in", value: $dose, step: 0.1, range: 5...30)
-                BigParam(label: "YIELD", unit: "g out", value: $yield, step: 0.5, range: 10...80)
+                BigParam(label: "DOSE", unit: "\(weightUnit.symbol) in", value: weightBinding($dose),
+                         step: weightUnit == .grams ? 0.1 : 0.05,
+                         range: weightUnit == .grams ? 5...30 : (5 / UnitPreferences.gramsPerOunce)...(30 / UnitPreferences.gramsPerOunce),
+                         format: weightUnit == .grams ? "%.1f" : "%.2f")
+                BigParam(label: "YIELD", unit: "\(weightUnit.symbol) out", value: weightBinding($yield),
+                         step: weightUnit == .grams ? 0.5 : 0.05,
+                         range: weightUnit == .grams ? 10...80 : (10 / UnitPreferences.gramsPerOunce)...(80 / UnitPreferences.gramsPerOunce),
+                         format: weightUnit == .grams ? "%.1f" : "%.2f")
             }
             HStack(spacing: 14) {
                 supportingStat(String(format: "%.0fs", shotTime), "TIME", tint: CremaColor.caramel)
@@ -737,13 +754,14 @@ private struct BigParam: View {
     @Binding var value: Double
     var step: Double
     var range: ClosedRange<Double>
+    var format: String = "%.1f"
 
     var body: some View {
         VStack(spacing: 10) {
             Text(label)
                 .font(.crema(11, .semibold))
                 .foregroundStyle(CremaColor.textTertiary)
-            Text(String(format: "%.1f", value))
+            Text(String(format: format, value))
                 .font(.crema(40, .bold))
                 .foregroundStyle(CremaColor.textPrimary)
                 .monospacedDigit()
