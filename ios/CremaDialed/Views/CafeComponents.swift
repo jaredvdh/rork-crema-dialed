@@ -420,6 +420,7 @@ struct SwipeToDelete<Content: View>: View {
 
     @State private var offset: CGFloat = 0
     @State private var revealed = false
+    @State private var isHorizontal = false
     private let actionWidth: CGFloat = 84
 
     var body: some View {
@@ -440,14 +441,24 @@ struct SwipeToDelete<Content: View>: View {
 
             content()
                 .offset(x: offset)
-                .gesture(
-                    DragGesture(minimumDistance: 16)
+                // High priority so the horizontal swipe wins over the row's
+                // NavigationLink button; a tap (no movement) still navigates.
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 12)
                         .onChanged { value in
+                            // Only engage once the gesture is clearly horizontal,
+                            // so vertical scrolling of the list is preserved.
+                            if !isHorizontal {
+                                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                                isHorizontal = true
+                            }
                             let base = revealed ? -actionWidth : 0
                             let proposed = base + value.translation.width
                             offset = min(0, max(proposed, -actionWidth - 24))
                         }
                         .onEnded { value in
+                            defer { isHorizontal = false }
+                            guard isHorizontal else { return }
                             withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
                                 if value.translation.width < -40 || offset < -actionWidth / 2 {
                                     offset = -actionWidth; revealed = true
