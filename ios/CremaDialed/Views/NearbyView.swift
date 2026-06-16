@@ -18,6 +18,8 @@ struct NearbyView: View {
     /// Open the full café detail page (caller ensures the café is persisted).
     var onOpen: (CafeResult) -> Void
 
+    @AppStorage(AppSettings.locationKey) private var locationEnabled: Bool = true
+
     @State private var query = ""
     @State private var searchResults: [CafeResult] = []
     @State private var isSearching = false
@@ -37,7 +39,7 @@ struct NearbyView: View {
             content
         }
         .background(CremaColor.background)
-        .onAppear { location.requestAndLocate() }
+        .onAppear { if locationEnabled { location.requestAndLocate() } }
         .onChange(of: query) { _, q in
             Task {
                 isSearching = true

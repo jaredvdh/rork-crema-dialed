@@ -8,6 +8,9 @@ import SwiftUI
 struct RootView: View {
     @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
     @AppStorage(CremaDataStore.didResetStoreKey) private var didResetStore: Bool = false
+    @AppStorage(AppSettings.appearanceKey) private var appearanceRaw: String = AppearanceMode.system.rawValue
+
+    private var appearance: AppearanceMode { AppearanceMode(rawValue: appearanceRaw) ?? .system }
 
     var body: some View {
         Group {
@@ -19,6 +22,7 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        .preferredColorScheme(appearance.colorScheme)
         .tint(CremaColor.espresso)
         .alert("Local Data Was Reset", isPresented: $didResetStore) {
             Button("OK", role: .cancel) { didResetStore = false }

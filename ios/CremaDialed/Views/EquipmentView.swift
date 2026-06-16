@@ -15,58 +15,40 @@ struct EquipmentView: View {
     @State private var showAddMachine = false
     @State private var showAddGrinder = false
     @State private var showLogMaintenance = false
-    @State private var showSettings = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                CremaColor.background.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: 16) {
-                        machinesSection
-                        grindersSection
-                    }
-                    .padding(16)
-                }
+        ScrollView {
+            VStack(spacing: 16) {
+                machinesSection
+                grindersSection
             }
-            .navigationTitle("Equipment")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        HapticEngine.light(); showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill").foregroundStyle(CremaColor.espresso)
-                    }
+            .padding(16)
+            .padding(.bottom, 24)
+        }
+        .background(CremaColor.background)
+        .navigationTitle("Equipment")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showAddMachine) {
+            AddMachineSheet { machine in
+                modelContext.insert(machine)
+                if machine.hasIntegratedGrinder {
+                    modelContext.insert(Grinder(manufacturer: machine.manufacturer,
+                                                model: "\(machine.model) Grinder",
+                                                kind: .stepped, isIntegrated: true))
                 }
+                HapticEngine.success()
             }
-            .sheet(isPresented: $showSettings) { SettingsView() }
-            .navigationDestination(for: UUID.self) { id in
-                if let machine = machines.first(where: { $0.id == id }) {
-                    MaintenanceView(machine: machine, hasGrinder: hasGrinder(for: machine))
-                }
+        }
+        .sheet(isPresented: $showAddGrinder) {
+            AddGrinderSheet { grinder in
+                modelContext.insert(grinder)
+                HapticEngine.success()
             }
-            .sheet(isPresented: $showAddMachine) {
-                AddMachineSheet { machine in
-                    modelContext.insert(machine)
-                    if machine.hasIntegratedGrinder {
-                        modelContext.insert(Grinder(manufacturer: machine.manufacturer,
-                                                    model: "\(machine.model) Grinder",
-                                                    kind: .stepped, isIntegrated: true))
-                    }
-                    HapticEngine.success()
-                }
-            }
-            .sheet(isPresented: $showAddGrinder) {
-                AddGrinderSheet { grinder in
-                    modelContext.insert(grinder)
-                    HapticEngine.success()
-                }
-            }
-            .sheet(isPresented: $showLogMaintenance) {
-                LogMaintenanceSheet(machines: machines) { log in
-                    modelContext.insert(log)
-                    HapticEngine.success()
-                }
+        }
+        .sheet(isPresented: $showLogMaintenance) {
+            LogMaintenanceSheet(machines: machines) { log in
+                modelContext.insert(log)
+                HapticEngine.success()
             }
         }
     }
@@ -84,7 +66,7 @@ struct EquipmentView: View {
                 emptyHint("Add your espresso machine to tailor the dial-in tools.")
             } else {
                 ForEach(machines) { machine in
-                    NavigationLink(value: machine.id) {
+                    NavigationLink(value: MachineRoute(id: machine.id)) {
                         CremaCard {
                             HStack(spacing: 14) {
                                 iconBadge("cup.and.saucer.fill")

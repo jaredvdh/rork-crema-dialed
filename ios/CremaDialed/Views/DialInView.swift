@@ -62,7 +62,7 @@ struct DialInView: View {
 
     @State private var showAdvanced = false
     @State private var showTimer = false
-    @State private var showEquipment = false
+    @State private var showSettings = false
     @State private var showRecipes = false
     @State private var showAddBean = false
     @State private var showEditBean = false
@@ -158,14 +158,14 @@ struct DialInView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        HapticEngine.light(); showEquipment = true
+                        HapticEngine.light(); showSettings = true
                     } label: {
                         Image(systemName: "gearshape.2.fill").foregroundStyle(CremaColor.espresso)
                     }
                 }
             }
             .sheet(isPresented: $showRecipes) { RecipesView() }
-            .sheet(isPresented: $showEquipment) { EquipmentView() }
+            .sheet(isPresented: $showSettings) { SettingsHomeView() }
             .sheet(isPresented: $showAddBean) {
                 AddBeanSheet { bean in
                     modelContext.insert(bean)
