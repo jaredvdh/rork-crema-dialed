@@ -7,6 +7,7 @@ import SwiftUI
 
 struct RootView: View {
     @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
+    @AppStorage(CremaDataStore.didResetStoreKey) private var didResetStore: Bool = false
 
     var body: some View {
         Group {
@@ -19,6 +20,11 @@ struct RootView: View {
             }
         }
         .tint(CremaColor.espresso)
+        .alert("Local Data Was Reset", isPresented: $didResetStore) {
+            Button("OK", role: .cancel) { didResetStore = false }
+        } message: {
+            Text("We couldn't open your saved coffee data on this device, so it had to be reset to keep the app working. Any brews, beans and café visits stored only on this phone may have been cleared.")
+        }
     }
 }
 

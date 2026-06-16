@@ -34,7 +34,7 @@ struct CameraPicker: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController,
                                    didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage,
-               let data = image.jpegData(compressionQuality: 0.8) {
+               let data = ImageDownscaler.downscaledJPEG(from: image) {
                 parent.onCapture(data)
             }
             parent.dismiss()
@@ -143,7 +143,7 @@ struct PhotoCaptureField: View {
                 var loaded: [Data] = []
                 for item in items {
                     if let data = try? await item.loadTransferable(type: Data.self) {
-                        loaded.append(data)
+                        loaded.append(ImageDownscaler.downscaledJPEG(from: data))
                     }
                 }
                 await MainActor.run {
@@ -226,7 +226,8 @@ struct SinglePhotoCaptureField: View {
         .onChange(of: libraryItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                    await MainActor.run { photo = data }
+                    let scaled = ImageDownscaler.downscaledJPEG(from: data)
+                    await MainActor.run { photo = scaled }
                 }
             }
         }

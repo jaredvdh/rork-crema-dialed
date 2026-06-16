@@ -1,22 +1,22 @@
-# React Native / Expo artifacts (should not exist in Swift projects)
-node_modules/
-.expo/
-.bundle/
-android/
-ios/
-babel.config.js
-metro.config.js
-package.json
-package-lock.json
-tsconfig.json
-app.json
-
-# Xcode
+# Xcode build artifacts
 build/
 DerivedData/
 *.xcuserstate
 *.xcuserdatad/
 xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode user/workspace settings
+*.xcscmblueprint
+*.xccheckout
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+*.pbxuser
 
 # Swift Package Manager
 .build/
