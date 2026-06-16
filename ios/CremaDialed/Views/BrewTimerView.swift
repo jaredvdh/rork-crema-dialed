@@ -135,9 +135,9 @@ struct BrewTimerView: View {
                     resultStat("RATIO", String(format: "1:%.1f", ratio), tint: .white)
                 }
                 HStack(spacing: 0) {
-                    resultStat("DOSE", String(format: "%.1fg", dose), tint: .white.opacity(0.9))
+                    resultStat("DOSE", UnitPreferences.weightLabel(grams: dose), tint: .white.opacity(0.9))
                     divider
-                    resultStat("YIELD", String(format: "%.1fg", yield), tint: .white.opacity(0.9))
+                    resultStat("YIELD", UnitPreferences.weightLabel(grams: yield), tint: .white.opacity(0.9))
                 }
 
                 Text(timer.isInTargetRange
@@ -212,9 +212,9 @@ struct BrewTimerView: View {
             HStack(spacing: 0) {
                 goldenStat("TIME", timer.goldenTime.map { String(format: "%.0fs", $0) })
                 goldenDivider
-                goldenStat("YIELD", timer.goldenYield.map { String(format: "%.0fg", $0) })
+                goldenStat("YIELD", timer.goldenYield.map { UnitPreferences.weightLabel(grams: $0) })
                 goldenDivider
-                goldenStat("DOSE", timer.goldenDose.map { String(format: "%.1fg", $0) })
+                goldenStat("DOSE", timer.goldenDose.map { UnitPreferences.weightLabel(grams: $0) })
                 goldenDivider
                 goldenStat("TEMP", timer.goldenTemp.map { String(format: "%.0f°", $0) })
                 if let b = timer.goldenBasket, !b.isEmpty {

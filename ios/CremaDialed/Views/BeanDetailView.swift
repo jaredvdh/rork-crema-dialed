@@ -148,8 +148,8 @@ struct GoldenRecipeCard: View {
                         .foregroundStyle(CremaColor.textPrimary)
                 }
                 HStack(spacing: 10) {
-                    goldenStat("Dose", String(format: "%.1fg", recipe.dose))
-                    goldenStat("Yield", String(format: "%.1fg", recipe.yield))
+                    goldenStat("Dose", UnitPreferences.weightLabel(grams: recipe.dose))
+                    goldenStat("Yield", UnitPreferences.weightLabel(grams: recipe.yield))
                     goldenStat("Ratio", recipe.ratioLabel)
                     goldenStat("Time", String(format: "%.0fs", recipe.shotTime))
                 }

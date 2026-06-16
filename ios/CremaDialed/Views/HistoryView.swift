@@ -122,7 +122,7 @@ struct BrewRow: View {
                                 .foregroundStyle(CremaColor.crema)
                         }
                     }
-                    Text("\(brew.basket.rawValue) · \(String(format: "%.1f", brew.dose))g → \(String(format: "%.0f", brew.yield))g")
+                    Text("\(brew.basket.rawValue) · \(UnitPreferences.weightLabel(grams: brew.dose)) → \(UnitPreferences.weightLabel(grams: brew.yield))")
                         .font(.crema(13, .medium))
                         .foregroundStyle(CremaColor.textSecondary)
                     Text("\(brew.ratioLabel) · \(Int(brew.shotTime))s")
