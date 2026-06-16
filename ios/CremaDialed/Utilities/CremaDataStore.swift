@@ -7,43 +7,38 @@
 //  upgrade path so future model changes can migrate user data instead of
 //  silently destroying it.
 //
-//  IMPORTANT: Every future @Model change (adding/removing/renaming a model or a
-//  property in a way SwiftData cannot infer automatically) MUST be paired with:
-//    1. A new versioned schema (e.g. `CremaSchemaV2`) capturing the new shape.
-//    2. A new `MigrationStage` in `CremaMigrationPlan.stages` describing how to
-//       move data from the previous version to the new one.
-//  Skipping this re-introduces the silent "wipe and start fresh" data loss the
-//  recovery path below only exists to guard against as an absolute last resort.
+//  IMPORTANT: How to evolve the schema safely.
+//
+//  - ADDITIVE / LIGHTWEIGHT changes (adding an optional property, adding a new
+//    @Model, removing a property, renaming with @Attribute(originalName:)) need
+//    NO new versioned schema and NO migration plan. SwiftData performs these
+//    automatically when the container opens. Simply update the model and bump
+//    `CremaSchema.versionIdentifier`.
+//    (`CafeVisit.beanID` was added exactly this way — as an optional — so it
+//    migrates automatically with no data loss.)
+//
+//  - NON-LIGHTWEIGHT changes (a new NON-optional property without a default,
+//    a type change, splitting/merging models, or any change that requires
+//    transforming existing data) MUST introduce a SECOND versioned schema that
+//    captures the OLD shape using DISTINCT model type definitions, plus a
+//    `SchemaMigrationPlan` with a `.custom` stage. CRITICAL: two versioned
+//    schemas that reference the SAME live @Model classes resolve to the same
+//    checksum and crash on launch with "Duplicate version checksums across
+//    stages detected" — so only add a V2 when the model shapes genuinely differ.
+//
+//  The destructive "wipe and start fresh" path below only exists as an absolute
+//  last resort for a store that is genuinely corrupt or unreadable.
 //
 
 import Foundation
 import SwiftData
 
-/// Version 1 of the persisted model set. This is the baseline shape shipped to
-/// users; new versions are added alongside it (never edited in place once
-/// shipped) so migrations have a stable starting point.
-enum CremaSchemaV1: VersionedSchema {
-    static var versionIdentifier = Schema.Version(1, 0, 0)
-
-    static var models: [any PersistentModel.Type] {
-        [
-            Bean.self,
-            Machine.self,
-            Grinder.self,
-            Brew.self,
-            DialedRecipe.self,
-            MaintenanceLog.self,
-            MaintenanceReminder.self,
-            Cafe.self,
-            CafeVisit.self,
-        ]
-    }
-}
-
-/// Version 2 adds an optional `beanID` to `CafeVisit`, linking a café check-in
-/// to one of the user's saved beans. Adding a new optional property is a
-/// lightweight migration SwiftData can perform automatically.
-enum CremaSchemaV2: VersionedSchema {
+/// The current persisted model set. SwiftData migrates existing on-disk stores
+/// to this shape automatically for lightweight changes. Bump
+/// `versionIdentifier` whenever the model set changes so the version is
+/// recorded; introduce a separate versioned schema + migration plan only for
+/// non-lightweight changes (see the file header).
+enum CremaSchema: VersionedSchema {
     static var versionIdentifier = Schema.Version(2, 0, 0)
 
     static var models: [any PersistentModel.Type] {
@@ -61,49 +56,30 @@ enum CremaSchemaV2: VersionedSchema {
     }
 }
 
-/// The ordered list of schema versions and the migration stages that connect
-/// them. Each version bump is paired with a stage so user data is migrated
-/// rather than destroyed.
-enum CremaMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] {
-        [CremaSchemaV1.self, CremaSchemaV2.self]
-    }
-
-    static var stages: [MigrationStage] {
-        // Add a `.lightweight` or `.custom` stage here for each future version
-        // bump — e.g. `migrateV2toV3`. Never leave a version bump without a stage.
-        [migrateV1toV2]
-    }
-
-    /// V1 → V2: adding the optional `CafeVisit.beanID` requires no data
-    /// transformation, so a lightweight stage suffices.
-    static let migrateV1toV2 = MigrationStage.lightweight(
-        fromVersion: CremaSchemaV1.self,
-        toVersion: CremaSchemaV2.self
-    )
-}
-
 enum CremaDataStore {
     /// Set to `true` when the on-disk store could not be opened or migrated and
     /// had to be reset. `RootView` reads this once to inform the user and then
     /// clears it.
     static let didResetStoreKey = "cremaDidResetLocalStore"
 
-    /// The current schema, derived from the latest versioned schema.
-    static var currentSchema: Schema { Schema(versionedSchema: CremaSchemaV2.self) }
+    /// The current schema, derived from the versioned schema.
+    static var currentSchema: Schema { Schema(versionedSchema: CremaSchema.self) }
 
-    /// Build the shared container. Tries the migrating on-disk store first and
-    /// only falls back to destructive recovery when the store genuinely cannot
-    /// be opened — recording that fact so the UI can warn the user.
+    /// Build the shared container. Tries the on-disk store first (SwiftData
+    /// applies automatic lightweight migration for compatible changes) and only
+    /// falls back to destructive recovery when the store genuinely cannot be
+    /// opened — recording that fact so the UI can warn the user.
     static func makeContainer() -> ModelContainer {
         let schema = currentSchema
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        // 1) Normal path: open the on-disk store, applying the migration plan.
+        // 1) Normal path: open the on-disk store. SwiftData automatically
+        // performs lightweight migration (e.g. the added optional `beanID`)
+        // without losing data. A migration plan is only needed for
+        // non-lightweight changes (see the file header).
         do {
             return try ModelContainer(
                 for: schema,
-                migrationPlan: CremaMigrationPlan.self,
                 configurations: [configuration]
             )
         } catch {
