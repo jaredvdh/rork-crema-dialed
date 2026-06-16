@@ -25,15 +25,9 @@ enum CafeSegment: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-/// Routes pushed from the Passport (beyond opening a specific café).
-enum PassportRoute: Hashable {
-    case map
-}
-
 struct CafesView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Cafe.createdAt, order: .reverse) private var cafes: [Cafe]
-    @Query(sort: \Bean.createdAt, order: .reverse) private var beans: [Bean]
 
     @State private var location = CafeLocationService()
     @State private var segment: CafeSegment = .nearby
@@ -60,8 +54,7 @@ struct CafesView: View {
                         PassportView(
                             cafes: cafes,
                             onCheckIn: { checkInRequest = CheckInRequest() },
-                            onDelete: deleteCafe,
-                            onOpenMap: { path.append(PassportRoute.map) }
+                            onDelete: deleteCafe
                         )
                     }
                 }
@@ -69,20 +62,13 @@ struct CafesView: View {
             .navigationTitle(segment == .nearby ? "Find Coffee" : "Coffee Passport")
             .navigationDestination(for: UUID.self) { id in
                 if let cafe = cafes.first(where: { $0.id == id }) {
-                    CafeDetailView(cafe: cafe, beans: beans) { checkInRequest = CheckInRequest(existing: cafe) }
-                }
-            }
-            .navigationDestination(for: PassportRoute.self) { route in
-                switch route {
-                case .map:
-                    PassportMapScreen(cafes: cafes)
+                    CafeDetailView(cafe: cafe) { checkInRequest = CheckInRequest(existing: cafe) }
                 }
             }
             .sheet(item: $checkInRequest) { request in
                 CheckInView(
                     location: location,
                     existingCafes: cafes,
-                    beans: beans,
                     preselectedResult: request.result,
                     preselectedCafe: request.existing
                 ) { cafe, visit in
@@ -121,30 +107,5 @@ struct CafesView: View {
 
     private func deleteCafe(_ cafe: Cafe) {
         modelContext.delete(cafe)
-    }
-}
-
-/// A full-screen map of every café the user has visited — opened from the
-/// Passport's compact map preview.
-struct PassportMapScreen: View {
-    var cafes: [Cafe]
-    @State private var position: MapCameraPosition = .automatic
-
-    private var visited: [Cafe] { cafes.filter { $0.hasVisited } }
-
-    var body: some View {
-        Map(position: $position) {
-            ForEach(visited) { cafe in
-                Annotation(cafe.name, coordinate: cafe.coordinate) {
-                    NavigationLink(value: cafe.id) {
-                        CafeMapMarker(isFavourite: cafe.isFavourite)
-                    }
-                }
-            }
-        }
-        .mapControls { MapUserLocationButton() }
-        .ignoresSafeArea(edges: .bottom)
-        .navigationTitle("Coffee Map")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
