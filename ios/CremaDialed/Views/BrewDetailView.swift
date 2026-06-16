@@ -28,8 +28,8 @@ struct BrewDetailView: View {
                 scoreHeader
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    MetricTile(label: "Dose", value: String(format: "%.1fg", brew.dose))
-                    MetricTile(label: "Yield", value: String(format: "%.1fg", brew.yield))
+                    MetricTile(label: "Dose", value: UnitPreferences.weightLabel(grams: brew.dose))
+                    MetricTile(label: "Yield", value: UnitPreferences.weightLabel(grams: brew.yield))
                     MetricTile(label: "Ratio", value: brew.ratioLabel, tint: CremaColor.espresso)
                     MetricTile(label: "Shot Time", value: "\(Int(brew.shotTime))s", tint: CremaColor.caramel)
                     MetricTile(label: "Water Temp", value: UnitPreferences.temperatureLabel(celsius: brew.waterTemp))

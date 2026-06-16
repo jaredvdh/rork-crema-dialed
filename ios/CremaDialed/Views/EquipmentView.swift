@@ -15,6 +15,7 @@ struct EquipmentView: View {
     @State private var showAddMachine = false
     @State private var showAddGrinder = false
     @State private var showLogMaintenance = false
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,16 @@ struct EquipmentView: View {
                 }
             }
             .navigationTitle("Equipment")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        HapticEngine.light(); showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill").foregroundStyle(CremaColor.espresso)
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
             .navigationDestination(for: UUID.self) { id in
                 if let machine = machines.first(where: { $0.id == id }) {
                     MaintenanceView(machine: machine, hasGrinder: hasGrinder(for: machine))

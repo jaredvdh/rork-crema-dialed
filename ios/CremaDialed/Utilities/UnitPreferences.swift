@@ -27,11 +27,31 @@ enum TemperatureUnit: String, CaseIterable, Identifiable {
     var symbol: String { self == .celsius ? "°C" : "°F" }
 }
 
+enum WeightUnit: String, CaseIterable, Identifiable {
+    case grams
+    case ounces
+
+    var id: String { rawValue }
+    var label: String { self == .grams ? "Grams" : "Ounces" }
+    var symbol: String { self == .grams ? "g" : "oz" }
+}
+
+enum VolumeUnit: String, CaseIterable, Identifiable {
+    case millilitres
+    case fluidOunces
+
+    var id: String { rawValue }
+    var label: String { self == .millilitres ? "Millilitres" : "Fluid Oz" }
+    var symbol: String { self == .millilitres ? "ml" : "fl oz" }
+}
+
 /// Reads the user's stored preferences and converts/format values for display.
 /// Keys match the `@AppStorage` keys used by `SettingsView`.
 enum UnitPreferences {
     static let systemKey = "measurementSystem"
     static let temperatureKey = "temperatureUnit"
+    static let weightKey = "weightUnit"
+    static let volumeKey = "volumeUnit"
 
     static var system: MeasurementSystem {
         MeasurementSystem(rawValue: UserDefaults.standard.string(forKey: systemKey) ?? "") ?? .metric
@@ -39,6 +59,14 @@ enum UnitPreferences {
 
     static var temperatureUnit: TemperatureUnit {
         TemperatureUnit(rawValue: UserDefaults.standard.string(forKey: temperatureKey) ?? "") ?? .celsius
+    }
+
+    static var weightUnit: WeightUnit {
+        WeightUnit(rawValue: UserDefaults.standard.string(forKey: weightKey) ?? "") ?? .grams
+    }
+
+    static var volumeUnit: VolumeUnit {
+        VolumeUnit(rawValue: UserDefaults.standard.string(forKey: volumeKey) ?? "") ?? .millilitres
     }
 
     // MARK: Temperature
@@ -51,6 +79,30 @@ enum UnitPreferences {
         switch temperatureUnit {
         case .celsius: return String(format: "%.1f°C", celsius)
         case .fahrenheit: return String(format: "%.0f°F", celsiusToFahrenheit(celsius))
+        }
+    }
+
+    // MARK: Weight
+
+    static let gramsPerOunce = 28.349523125
+
+    /// A weight stored in grams formatted in the user's preferred unit.
+    static func weightLabel(grams: Double) -> String {
+        switch weightUnit {
+        case .grams: return String(format: "%.1fg", grams)
+        case .ounces: return String(format: "%.2foz", grams / gramsPerOunce)
+        }
+    }
+
+    // MARK: Volume
+
+    static let millilitresPerFluidOunce = 29.5735295625
+
+    /// A volume stored in millilitres formatted in the user's preferred unit.
+    static func volumeLabel(millilitres: Double) -> String {
+        switch volumeUnit {
+        case .millilitres: return String(format: "%.0fml", millilitres)
+        case .fluidOunces: return String(format: "%.1ffl oz", millilitres / millilitresPerFluidOunce)
         }
     }
 

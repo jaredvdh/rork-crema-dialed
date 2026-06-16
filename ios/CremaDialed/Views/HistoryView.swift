@@ -12,7 +12,6 @@ struct HistoryView: View {
     @State private var minRating = 0
     @State private var goldenOnly = false
     @State private var showInsights = false
-    @State private var showSettings = false
 
     private var filtered: [Brew] {
         brews.filter { brew in
@@ -71,16 +70,8 @@ struct HistoryView: View {
                         Image(systemName: "chart.bar.fill").foregroundStyle(CremaColor.espresso)
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        HapticEngine.light(); showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill").foregroundStyle(CremaColor.espresso)
-                    }
-                }
             }
             .sheet(isPresented: $showInsights) { InsightsView() }
-            .sheet(isPresented: $showSettings) { SettingsView() }
         }
     }
 
