@@ -1,0 +1,52 @@
+{
+  "theme": {
+    "style": "Deeply immersive espresso-world aesthetic: near-black roasted-brown foundations warmed by pools of crema gold and amber light. The mood is quiet luxury — like a specialty café late at night. Textures suggest heat, depth, and craft: soft volumetric glows, molten amber arcs, translucent obsidian layers. Backgrounds feel warm but never saturated, premium but never cold.",
+    "headlineFont": "font-family: 'Plus Jakarta Sans', sans-serif; @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap')",
+    "headlineFontSize": 120,
+    "mockupIds": {
+      "iphone": "deep-blue",
+      "ipad": "space-gray"
+    },
+    "palette": {
+      "primary": "#160C07",
+      "secondary": "#3A1A0A",
+      "accent": "#C8912A"
+    }
+  },
+  "slides": [
+    {
+      "label": "Extraction Timer",
+      "backgroundPrompt": "Abstract 3D rendered environment with a massive radial bloom of molten crema gold and deep amber light erupting from the lower center of the frame, sending long luminous arcs sweeping upward and outward against a near-black espresso brown void, the glow fading into rich dark chocolate at the upper third leaving a calm uncluttered zone for text, subtle heat-haze distortion rippling the edges of the light bloom, fine golden particulate dust suspended mid-air catching the warm light, cinematic volumetric lighting from below, soft depth-of-field blur at the extreme edges. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/10be8009-b47b-47b1-add8-31e3f910040e.png"
+    },
+    {
+      "label": "Dial In Golden Recipe",
+      "backgroundPrompt": "Abstract digital art featuring flowing ribbons of liquid amber and burnished gold silk sweeping diagonally from the lower left to upper right across a deep roasted-brown-to-black background, the ribbons catching dramatic rim lighting from the right edge creating bright golden highlights and deep ochre shadows, the upper 30% dissolving into near-black for clean text readability, subtle translucent glass shards floating in the mid-ground refracting the warm amber light into tiny scattered prismatic spots, smooth and lush with a sense of slow motion luxury. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/7811fa3f-a6b4-4639-a614-3734369fa38c.png"
+    },
+    {
+      "label": "Beans Inventory",
+      "backgroundPrompt": "3D rendered scene with a single massive soft sphere of warm amber light blooming from the lower right corner and bleeding across a deep espresso-brown-to-near-black gradient, the sphere's edge creating a gentle penumbra of raw sienna and honey gold across the midground, the upper left quadrant remaining deeply shadowed and calm for headline text, faint wisps of smoke-like translucent forms drifting upward from the glow source catching the amber radiance on their edges, the overall feel is warm, slow, and contemplative with exquisite tonal depth. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/36446eb9-b3c4-4e63-883e-3c50514c2cbc.png"
+    },
+    {
+      "label": "Shot Journal",
+      "backgroundPrompt": "Abstract 3D rendered layers of deep obsidian glass planes stacked at shallow angles receding into darkness, each plane's leading edge catching a thin knife-line of warm crema gold light from a source below and to the right, creating dramatic stepped highlights against rich near-black espresso shadow, the upper third fading to pure dark allowing strong text contrast, fine grain texture across the glass surfaces giving tactile depth and warmth, long horizontal depth-of-field blur softening the background layers into a smooth dark haze, the overall composition feeling archival and precise. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/5ad140a6-9713-4059-b448-4123b2afbc1b.png"
+    },
+    {
+      "label": "Insights",
+      "backgroundPrompt": "Abstract digital art showing a vast dark espresso-brown-to-near-black expanse populated by a constellation of tiny luminous crema gold and amber dots of varying sizes, connected by hair-thin glowing threads of warm gold forming an open organic web structure that pools with the most density in the lower center of the frame, a diffused soft amber radiance emanating from the cluster creating a gentle upward gradient of light that dissipates before the upper third, the top zone remaining deep and dark for text overlay, the overall atmosphere is quiet, expansive, and quietly triumphant. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/4708f91b-e8c3-49e6-ac91-c186f64f0cf1.png"
+    }
+  ],
+  "headlines": {
+    "en": {
+      "Extraction Timer": "Perfect<br>Every Pull",
+      "Dial In Golden Recipe": "Your Golden<br>Recipe",
+      "Beans Inventory": "Fresh Beans<br>Tracked",
+      "Shot Journal": "Every Shot<br>Remembered",
+      "Insights": "Watch It<br>Get Better"
+    }
+  }
+}
