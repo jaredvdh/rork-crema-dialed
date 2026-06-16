@@ -1,10 +1,13 @@
 {
+  "$schema": "https://rork.com/schema/rork.json",
   "apps": [
     {
       "name": "Crema Dialed",
       "path": "ios",
-      "framework": "swift"
+      "framework": "swift",
+      "settings": {
+        "iosBundleId": "app.rork.5z7jr4n9mqp81gcndtqh7"
+      }
     }
-  ],
-  "$schema": "https://rork.com/schema/rork.json"
+  ]
 }
