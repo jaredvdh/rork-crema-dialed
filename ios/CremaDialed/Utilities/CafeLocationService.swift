@@ -34,8 +34,7 @@ struct CafeResult: Identifiable, Hashable {
 
     var distanceLabel: String? {
         guard let distance else { return nil }
-        if distance < 1000 { return "\(Int(distance))m away" }
-        return String(format: "%.1fkm away", distance / 1000)
+        return UnitPreferences.distanceLabel(metres: distance)
     }
 
     static func == (lhs: CafeResult, rhs: CafeResult) -> Bool { lhs.id == rhs.id }

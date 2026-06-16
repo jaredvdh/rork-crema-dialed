@@ -47,8 +47,6 @@ struct MainTabView: View {
                 .tabItem { Label("Cafés", systemImage: "mappin.and.ellipse") }
             HistoryView()
                 .tabItem { Label("Journal", systemImage: "book.closed.fill") }
-            InsightsView()
-                .tabItem { Label("Insights", systemImage: "chart.bar.fill") }
         }
     }
 }

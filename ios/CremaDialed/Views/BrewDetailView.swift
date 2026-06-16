@@ -32,7 +32,7 @@ struct BrewDetailView: View {
                     MetricTile(label: "Yield", value: String(format: "%.1fg", brew.yield))
                     MetricTile(label: "Ratio", value: brew.ratioLabel, tint: CremaColor.espresso)
                     MetricTile(label: "Shot Time", value: "\(Int(brew.shotTime))s", tint: CremaColor.caramel)
-                    MetricTile(label: "Water Temp", value: String(format: "%.1f°C", brew.waterTemp))
+                    MetricTile(label: "Water Temp", value: UnitPreferences.temperatureLabel(celsius: brew.waterTemp))
                     MetricTile(label: "Pressure", value: String(format: "%.0f bar", brew.pressure))
                 }
 

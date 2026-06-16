@@ -11,6 +11,8 @@ struct HistoryView: View {
     @State private var search = ""
     @State private var minRating = 0
     @State private var goldenOnly = false
+    @State private var showInsights = false
+    @State private var showSettings = false
 
     private var filtered: [Brew] {
         brews.filter { brew in
@@ -61,6 +63,24 @@ struct HistoryView: View {
             .navigationTitle("Journal")
             .searchable(text: $search, prompt: "Search beans, roasters, machines")
             .navigationDestination(for: Brew.self) { BrewDetailView(brew: $0) }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        HapticEngine.light(); showInsights = true
+                    } label: {
+                        Image(systemName: "chart.bar.fill").foregroundStyle(CremaColor.espresso)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        HapticEngine.light(); showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill").foregroundStyle(CremaColor.espresso)
+                    }
+                }
+            }
+            .sheet(isPresented: $showInsights) { InsightsView() }
+            .sheet(isPresented: $showSettings) { SettingsView() }
         }
     }
 

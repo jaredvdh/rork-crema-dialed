@@ -25,6 +25,7 @@ struct DialInView: View {
     @AppStorage("lastBeanID") private var lastBeanID: String = ""
     @AppStorage("lastBasket") private var lastBasket: String = BasketSize.double.rawValue
     @AppStorage("defaultBasket") private var defaultBasket: String = BasketSize.double.rawValue
+    @AppStorage(UnitPreferences.temperatureKey) private var tempUnitRaw: String = TemperatureUnit.celsius.rawValue
 
     @State private var selectedBean: Bean?
     @State private var selectedMachine: Machine?
@@ -70,6 +71,15 @@ struct DialInView: View {
 
     private var ratio: Double { dose > 0 ? yield / dose : 0 }
     private var overall: Int { flavourScore }
+
+    /// The user's chosen temperature unit. `waterTemp` is always stored in Celsius.
+    private var tempUnit: TemperatureUnit { TemperatureUnit(rawValue: tempUnitRaw) ?? .celsius }
+    private var waterTempBinding: Binding<Double> {
+        Binding(
+            get: { tempUnit == .celsius ? waterTemp : UnitPreferences.celsiusToFahrenheit(waterTemp) },
+            set: { waterTemp = tempUnit == .celsius ? $0 : UnitPreferences.fahrenheitToCelsius($0) }
+        )
+    }
 
     private var golden: DialedRecipe? {
         guard let selectedBean else { return nil }
@@ -127,7 +137,12 @@ struct DialInView: View {
                     Button {
                         HapticEngine.light(); showRecipes = true
                     } label: {
-                        Image(systemName: "book.pages.fill").foregroundStyle(CremaColor.espresso)
+                        HStack(spacing: 5) {
+                            Image(systemName: "book.pages.fill")
+                            Text("Recipes")
+                        }
+                        .font(.crema(15, .semibold))
+                        .foregroundStyle(CremaColor.espresso)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -500,7 +515,10 @@ struct DialInView: View {
         VStack(spacing: 12) {
             SectionHeader("Brew Parameters")
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ParamStepper(label: "Water Temp", unit: "°C", value: $waterTemp, step: 0.5, range: 85...100, format: "%.1f")
+                ParamStepper(label: "Water Temp", unit: tempUnit.symbol, value: waterTempBinding,
+                             step: tempUnit == .celsius ? 0.5 : 1,
+                             range: tempUnit == .celsius ? 85...100 : 185...212,
+                             format: tempUnit == .celsius ? "%.1f" : "%.0f")
                 ParamStepper(label: "Pressure", unit: "bar", value: $pressure, step: 0.5, range: 1...12, format: "%.1f")
                 ParamStepper(label: "Pre-infusion", unit: "seconds", value: $preInfusion, step: 0.5, range: 0...20, format: "%.1f")
                 ParamStepper(label: "Shot Time", unit: "seconds", value: $shotTime, step: 0.5, range: 5...60, format: "%.0f")
