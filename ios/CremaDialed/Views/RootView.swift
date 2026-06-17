@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct RootView: View {
     @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
@@ -23,6 +24,7 @@ struct RootView: View {
             }
         }
         .preferredColorScheme(appearance.colorScheme)
+        .applyInterfaceStyle(appearance.interfaceStyle)
         .tint(CremaColor.espresso)
         .alert("Local Data Was Reset", isPresented: $didResetStore) {
             Button("OK", role: .cancel) { didResetStore = false }

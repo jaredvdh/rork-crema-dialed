@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// How the app chooses its colour scheme.
 enum AppearanceMode: String, CaseIterable, Identifiable {
@@ -37,6 +38,17 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
     var colorScheme: ColorScheme? {
         switch self {
         case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+
+    /// The UIKit interface style to force on the window. Dynamic `UIColor`s
+    /// resolve against the window trait collection, so this is what actually
+    /// repaints the warm espresso palette when the theme changes.
+    var interfaceStyle: UIUserInterfaceStyle {
+        switch self {
+        case .system: return .unspecified
         case .light: return .light
         case .dark: return .dark
         }
