@@ -1,52 +1,52 @@
 {
   "theme": {
-    "style": "Deeply immersive espresso-world aesthetic: near-black roasted-brown foundations warmed by pools of crema gold and amber light. The mood is quiet luxury — like a specialty café late at night. Textures suggest heat, depth, and craft: soft volumetric glows, molten amber arcs, translucent obsidian layers. Backgrounds feel warm but never saturated, premium but never cold.",
-    "headlineFont": "font-family: 'Plus Jakarta Sans', sans-serif; @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap')",
-    "headlineFontSize": 120,
+    "style": "Deep espresso ritual world: near-black roasted-brown backgrounds with molten crema-gold and warm amber light sources that feel organic and heat-driven. Lighting is dramatic and directional, like a single-origin pour caught under a café lamp. Textures lean into warmth — soft luminous blooms, flowing liquid gold, razor edge reflections — all grounded by a rich, confident darkness that feels premium and intentional. Every background belongs to the world of obsessive craft and sensory pleasure.",
+    "headlineFont": "font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap')",
+    "headlineFontSize": 112,
     "mockupIds": {
       "iphone": "deep-blue",
       "ipad": "space-gray"
     },
     "palette": {
-      "primary": "#160C07",
-      "secondary": "#3A1A0A",
-      "accent": "#C8912A"
+      "primary": "#130C08",
+      "secondary": "#7A3B10",
+      "accent": "#C8820A"
     }
   },
   "slides": [
     {
-      "label": "Extraction Timer",
-      "backgroundPrompt": "Abstract 3D rendered environment with a massive radial bloom of molten crema gold and deep amber light erupting from the lower center of the frame, sending long luminous arcs sweeping upward and outward against a near-black espresso brown void, the glow fading into rich dark chocolate at the upper third leaving a calm uncluttered zone for text, subtle heat-haze distortion rippling the edges of the light bloom, fine golden particulate dust suspended mid-air catching the warm light, cinematic volumetric lighting from below, soft depth-of-field blur at the extreme edges. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
-      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/10be8009-b47b-47b1-add8-31e3f910040e.png"
-    },
-    {
-      "label": "Dial In Golden Recipe",
-      "backgroundPrompt": "Abstract digital art featuring flowing ribbons of liquid amber and burnished gold silk sweeping diagonally from the lower left to upper right across a deep roasted-brown-to-black background, the ribbons catching dramatic rim lighting from the right edge creating bright golden highlights and deep ochre shadows, the upper 30% dissolving into near-black for clean text readability, subtle translucent glass shards floating in the mid-ground refracting the warm amber light into tiny scattered prismatic spots, smooth and lush with a sense of slow motion luxury. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
-      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/7811fa3f-a6b4-4639-a614-3734369fa38c.png"
-    },
-    {
-      "label": "Beans Inventory",
-      "backgroundPrompt": "3D rendered scene with a single massive soft sphere of warm amber light blooming from the lower right corner and bleeding across a deep espresso-brown-to-near-black gradient, the sphere's edge creating a gentle penumbra of raw sienna and honey gold across the midground, the upper left quadrant remaining deeply shadowed and calm for headline text, faint wisps of smoke-like translucent forms drifting upward from the glow source catching the amber radiance on their edges, the overall feel is warm, slow, and contemplative with exquisite tonal depth. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
-      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/36446eb9-b3c4-4e63-883e-3c50514c2cbc.png"
-    },
-    {
-      "label": "Shot Journal",
-      "backgroundPrompt": "Abstract 3D rendered layers of deep obsidian glass planes stacked at shallow angles receding into darkness, each plane's leading edge catching a thin knife-line of warm crema gold light from a source below and to the right, creating dramatic stepped highlights against rich near-black espresso shadow, the upper third fading to pure dark allowing strong text contrast, fine grain texture across the glass surfaces giving tactile depth and warmth, long horizontal depth-of-field blur softening the background layers into a smooth dark haze, the overall composition feeling archival and precise. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
-      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/5ad140a6-9713-4059-b448-4123b2afbc1b.png"
+      "label": "Dial In",
+      "backgroundPrompt": "Abstract digital art featuring a radial bloom of molten crema-gold and burnished amber light erupting from the lower center of a vast near-black espresso-brown field, with soft volumetric light rays fanning outward in wide arcs and fine luminous particles suspended mid-glow. The warm gold dissolves gradually into deep roasted brown as it climbs the frame, leaving the upper third calm, dark, and uncluttered for text. Subtle heat-shimmer distortion and fine grain texture add organic depth. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/a64d70d4-de1a-4498-98c1-063f05e30b51.png"
     },
     {
       "label": "Insights",
-      "backgroundPrompt": "Abstract digital art showing a vast dark espresso-brown-to-near-black expanse populated by a constellation of tiny luminous crema gold and amber dots of varying sizes, connected by hair-thin glowing threads of warm gold forming an open organic web structure that pools with the most density in the lower center of the frame, a diffused soft amber radiance emanating from the cluster creating a gentle upward gradient of light that dissipates before the upper third, the top zone remaining deep and dark for text overlay, the overall atmosphere is quiet, expansive, and quietly triumphant. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups.",
-      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/4708f91b-e8c3-49e6-ac91-c186f64f0cf1.png"
+      "backgroundPrompt": "Abstract digital art with a sparse constellation of warm amber and crema-gold dots distributed across a deep near-black expanse, connected by hair-thin luminous gold threads that carry a soft inner pulse, with a diffuse amber glow pooling gently in the lower center. The upper two-thirds remains open and dark, while subtle depth-of-field softens the outer edges and a faint vignette deepens the corners. Fine tactile grain gives the surface a premium, slightly textured quality. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/f36f0080-96cf-4d5b-8ae4-be3b3a5fd9ae.png"
+    },
+    {
+      "label": "Find Coffee",
+      "backgroundPrompt": "Abstract digital art with an intense bloom of liquid amber and crema-gold light erupting from the lower-right corner, casting long sweeping horizontal gradients across a deep roasted-brown to near-black field, with soft wispy tendrils of warm light curling upward and dissolving into darkness. The lower right blazes with concentrated warmth while the upper-left third resolves to pure dark calm, creating strong diagonal visual tension. Cinematic depth-of-field blur softens the far edges. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/a7ec4253-02f7-4c76-9959-21385d64b3a3.png"
+    },
+    {
+      "label": "Coffee Passport",
+      "backgroundPrompt": "Abstract digital art featuring flowing semi-translucent silk ribbons of deep amber, crema-gold, and warm ochre sweeping in long diagonal arcs from the lower left upward across a deep roasted-brown void, with each ribbon carrying a luminous inner glow and layering over one another to create rich translucent depth. The lower portion blazes with overlapping ribbon energy while the upper region fades smoothly to near-black darkness, open and calm. Soft volumetric light bleeds between the ribbon layers. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/b488d5e7-6cfa-403d-b4e7-07f569dc0a76.png"
+    },
+    {
+      "label": "Maintenance",
+      "backgroundPrompt": "Abstract digital art of stacked obsidian glass planes arranged at precise shallow angles against a near-black background, each plane edge catching a razor-thin line of crema-gold and warm amber light that slices sharply across the composition. Deep cool shadows fill the gaps between layers creating dramatic architectural depth, while faint amber reflections scatter across the dark polished surfaces below. The upper third resolves to uninterrupted near-black, clean and still. 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/894e71d1-9a53-431a-9cc2-e9f952d930ee.png"
     }
   ],
   "headlines": {
     "en": {
-      "Extraction Timer": "Perfect<br>Every Pull",
-      "Dial In Golden Recipe": "Your Golden<br>Recipe",
-      "Beans Inventory": "Fresh Beans<br>Tracked",
-      "Shot Journal": "Every Shot<br>Remembered",
-      "Insights": "Watch It<br>Get Better"
+      "Dial In": "Perfect<br>Every Pull",
+      "Insights": "Watch It<br>Get Better",
+      "Find Coffee": "Discover<br>Great Coffee",
+      "Coffee Passport": "Your Coffee<br>Passport",
+      "Maintenance": "Keep It<br>Running Clean"
     }
   }
 }
