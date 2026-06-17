@@ -309,9 +309,21 @@ enum BackupService {
         let existingVisits = Set(((try? context.fetch(FetchDescriptor<CafeVisit>())) ?? []).map(\.id))
 
         var beanByID: [UUID: Bean] = [:]
+        for bean in (try? context.fetch(FetchDescriptor<Bean>())) ?? [] {
+            beanByID[bean.id] = bean
+        }
         var machineByID: [UUID: Machine] = [:]
+        for machine in (try? context.fetch(FetchDescriptor<Machine>())) ?? [] {
+            machineByID[machine.id] = machine
+        }
         var grinderByID: [UUID: Grinder] = [:]
+        for grinder in (try? context.fetch(FetchDescriptor<Grinder>())) ?? [] {
+            grinderByID[grinder.id] = grinder
+        }
         var cafeByID: [UUID: Cafe] = [:]
+        for cafe in (try? context.fetch(FetchDescriptor<Cafe>())) ?? [] {
+            cafeByID[cafe.id] = cafe
+        }
 
         for dto in backup.beans where !existingBeans.contains(dto.id) {
             let bean = Bean(name: dto.name)

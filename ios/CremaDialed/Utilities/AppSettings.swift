@@ -62,7 +62,6 @@ enum AppSettings {
     static let hapticsKey = "hapticsEnabled"
     static let notificationsKey = "notificationsEnabled"
     static let locationKey = "locationServicesEnabled"
-    static let iCloudSyncKey = "iCloudSyncEnabled"
 
     /// Whether haptic feedback should fire. Defaults to on when unset.
     static var hapticsEnabled: Bool {

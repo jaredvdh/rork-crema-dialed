@@ -14,7 +14,6 @@ import UniformTypeIdentifiers
 
 struct DataBackupView: View {
     @Environment(\.modelContext) private var modelContext
-    @AppStorage(AppSettings.iCloudSyncKey) private var iCloudSyncEnabled: Bool = false
 
     @State private var exportURL: IdentifiableURL?
     @State private var showImporter = false
@@ -25,7 +24,6 @@ struct DataBackupView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                syncSection
                 backupSection
                 exportSection
                 includedNote
@@ -48,32 +46,6 @@ struct DataBackupView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(resultMessage ?? "")
-        }
-    }
-
-    // MARK: Sync
-
-    private var syncSection: some View {
-        VStack(spacing: 12) {
-            sectionTitle("Sync")
-            CremaCard {
-                HStack(spacing: 12) {
-                    iconBadge("icloud.fill", tint: CremaColor.crema)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("iCloud Sync")
-                            .font(.crema(17, .bold))
-                            .foregroundStyle(CremaColor.textPrimary)
-                        Text("Keep this device backed up to your iCloud account")
-                            .font(.crema(13, .medium))
-                            .foregroundStyle(CremaColor.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 0)
-                    Toggle("", isOn: $iCloudSyncEnabled)
-                        .labelsHidden()
-                        .tint(CremaColor.crema)
-                }
-            }
         }
     }
 
