@@ -12,7 +12,10 @@
     {
       "name": "Crema Dialed Support",
       "path": "web",
-      "framework": "web"
+      "framework": "web",
+      "settings": {
+        "webSlug": "www-cremadialed-app"
+      }
     }
   ]
 }
