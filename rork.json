@@ -8,6 +8,11 @@
       "settings": {
         "iosBundleId": "com.jaredvdh.cremadialed"
       }
+    },
+    {
+      "name": "Crema Dialed Support",
+      "path": "web",
+      "framework": "web"
     }
   ]
 }
