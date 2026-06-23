@@ -26,6 +26,9 @@ struct PhotoGalleryEditor: View {
 
     @State private var showSourceDialog = false
     @State private var showCamera = false
+    @State private var showLibrary = false
+    @State private var showCameraDeniedAlert = false
+    @State private var showLoadErrorAlert = false
     @State private var libraryItems: [PhotosPickerItem] = []
     @State private var editingCaptionFor: GalleryPhoto?
 
@@ -44,19 +47,29 @@ struct PhotoGalleryEditor: View {
         }
         .confirmationDialog("Add Photo", isPresented: $showSourceDialog, titleVisibility: .visible) {
             if cameraAvailable {
-                Button("Take Photo") { showCamera = true }
+                Button("Take Photo") {
+                    Task {
+                        if await MediaPermissions.ensureCameraAccess() {
+                            showCamera = true
+                        } else {
+                            showCameraDeniedAlert = true
+                        }
+                    }
+                }
             }
-            PhotosPicker(selection: $libraryItems,
-                         maxSelectionCount: max(1, maxPhotos - photos.count),
-                         matching: .images) {
-                Text("Choose from Library")
-            }
+            Button("Choose from Library") { showLibrary = true }
             Button("Cancel", role: .cancel) {}
         } message: {
             if !cameraAvailable {
                 Text("Install the app on your device via the Rork App to take photos with the camera.")
             }
         }
+        .photosPicker(isPresented: $showLibrary,
+                      selection: $libraryItems,
+                      maxSelectionCount: max(1, maxPhotos - photos.count),
+                      matching: .images)
+        .cameraAccessAlert(isPresented: $showCameraDeniedAlert)
+        .photoLoadErrorAlert(isPresented: $showLoadErrorAlert)
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { data in
                 if photos.count < maxPhotos { photos.append(GalleryPhoto(data: data)) }
@@ -75,9 +88,12 @@ struct PhotoGalleryEditor: View {
             guard !items.isEmpty else { return }
             Task {
                 var loaded: [Data] = []
+                var failed = false
                 for item in items {
                     if let data = try? await item.loadTransferable(type: Data.self) {
-                        loaded.append(data)
+                        loaded.append(ImageDownscaler.downscaledJPEG(from: data))
+                    } else {
+                        failed = true
                     }
                 }
                 await MainActor.run {
@@ -85,6 +101,7 @@ struct PhotoGalleryEditor: View {
                         photos.append(GalleryPhoto(data: data))
                     }
                     libraryItems = []
+                    if failed && loaded.isEmpty { showLoadErrorAlert = true }
                 }
             }
         }

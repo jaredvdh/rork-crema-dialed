@@ -54,6 +54,9 @@ struct PhotoCaptureField: View {
 
     @State private var showSourceDialog = false
     @State private var showCamera = false
+    @State private var showLibrary = false
+    @State private var showCameraDeniedAlert = false
+    @State private var showLoadErrorAlert = false
     @State private var libraryItems: [PhotosPickerItem] = []
 
     private var cameraAvailable: Bool {
@@ -69,11 +72,7 @@ struct PhotoCaptureField: View {
                 Spacer()
                 Button {
                     HapticEngine.tap()
-                    if cameraAvailable {
-                        showSourceDialog = true
-                    } else {
-                        showSourceDialog = true
-                    }
+                    showSourceDialog = true
                 } label: {
                     Label("Add", systemImage: "plus")
                         .font(.crema(14, .semibold))
@@ -118,32 +117,45 @@ struct PhotoCaptureField: View {
         }
         .confirmationDialog("Add Photo", isPresented: $showSourceDialog, titleVisibility: .visible) {
             if cameraAvailable {
-                Button("Take Photo") { showCamera = true }
+                Button("Take Photo") {
+                    Task {
+                        if await MediaPermissions.ensureCameraAccess() {
+                            showCamera = true
+                        } else {
+                            showCameraDeniedAlert = true
+                        }
+                    }
+                }
             }
-            PhotosPicker(selection: $libraryItems,
-                         maxSelectionCount: max(1, maxPhotos - photos.count),
-                         matching: .images) {
-                Text("Choose from Library")
-            }
+            Button("Choose from Library") { showLibrary = true }
             Button("Cancel", role: .cancel) {}
         } message: {
             if !cameraAvailable {
                 Text("Install the app on your device via the Rork App to take photos with the camera.")
             }
         }
+        .photosPicker(isPresented: $showLibrary,
+                      selection: $libraryItems,
+                      maxSelectionCount: max(1, maxPhotos - photos.count),
+                      matching: .images)
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { data in
                 if photos.count < maxPhotos { photos.append(data) }
             }
             .ignoresSafeArea()
         }
+        .cameraAccessAlert(isPresented: $showCameraDeniedAlert)
+        .photoLoadErrorAlert(isPresented: $showLoadErrorAlert)
         .onChange(of: libraryItems) { _, items in
             guard !items.isEmpty else { return }
             Task {
                 var loaded: [Data] = []
+                var failed = false
                 for item in items {
                     if let data = try? await item.loadTransferable(type: Data.self) {
                         loaded.append(ImageDownscaler.downscaledJPEG(from: data))
+                    } else {
+                        failed = true
                     }
                 }
                 await MainActor.run {
@@ -151,6 +163,7 @@ struct PhotoCaptureField: View {
                         photos.append(data)
                     }
                     libraryItems = []
+                    if failed && loaded.isEmpty { showLoadErrorAlert = true }
                 }
             }
         }
@@ -165,6 +178,9 @@ struct SinglePhotoCaptureField: View {
 
     @State private var showSourceDialog = false
     @State private var showCamera = false
+    @State private var showLibrary = false
+    @State private var showCameraDeniedAlert = false
+    @State private var showLoadErrorAlert = false
     @State private var libraryItem: PhotosPickerItem?
 
     private var cameraAvailable: Bool {
@@ -205,11 +221,17 @@ struct SinglePhotoCaptureField: View {
         .buttonStyle(PressableStyle())
         .confirmationDialog("Add Photo", isPresented: $showSourceDialog, titleVisibility: .visible) {
             if cameraAvailable {
-                Button("Take Photo") { showCamera = true }
+                Button("Take Photo") {
+                    Task {
+                        if await MediaPermissions.ensureCameraAccess() {
+                            showCamera = true
+                        } else {
+                            showCameraDeniedAlert = true
+                        }
+                    }
+                }
             }
-            PhotosPicker(selection: $libraryItem, matching: .images) {
-                Text("Choose from Library")
-            }
+            Button("Choose from Library") { showLibrary = true }
             if photo != nil {
                 Button("Remove Photo", role: .destructive) { photo = nil }
             }
@@ -219,17 +241,46 @@ struct SinglePhotoCaptureField: View {
                 Text("Install the app on your device via the Rork App to take photos with the camera.")
             }
         }
+        .photosPicker(isPresented: $showLibrary, selection: $libraryItem, matching: .images)
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { data in photo = data }
                 .ignoresSafeArea()
         }
+        .cameraAccessAlert(isPresented: $showCameraDeniedAlert)
+        .photoLoadErrorAlert(isPresented: $showLoadErrorAlert)
         .onChange(of: libraryItem) { _, newItem in
+            guard let newItem else { return }
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                if let data = try? await newItem.loadTransferable(type: Data.self) {
                     let scaled = ImageDownscaler.downscaledJPEG(from: data)
                     await MainActor.run { photo = scaled }
+                } else {
+                    await MainActor.run { showLoadErrorAlert = true }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Shared permission/error alerts
+
+extension View {
+    /// Alert shown when camera access is denied, with a shortcut to Settings.
+    func cameraAccessAlert(isPresented: Binding<Bool>) -> some View {
+        alert("Camera Access Needed", isPresented: isPresented) {
+            Button("Open Settings") { MediaPermissions.openSettings() }
+            Button("Not Now", role: .cancel) {}
+        } message: {
+            Text("Camera access is needed to take photos for your coffee journal. You can enable access in Settings.")
+        }
+    }
+
+    /// Alert shown when a selected photo could not be loaded from the library.
+    func photoLoadErrorAlert(isPresented: Binding<Bool>) -> some View {
+        alert("Couldn't Load Photo", isPresented: isPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("We couldn't open your photo library. Please try again.")
         }
     }
 }

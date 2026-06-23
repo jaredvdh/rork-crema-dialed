@@ -402,9 +402,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Crema Dialed uses the camera to photograph your coffee and bean bags.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Crema Dialed uses photo access so you can attach coffee, cafe, machine, and grinder photos to your personal coffee journal.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Crema Dialed uses your location to find nearby cafes when you check in.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Crema Dialed lets you attach photos of your coffee and cafe visits.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Crema Dialed uses photo access so you can attach coffee, cafe, machine, and grinder photos to your personal coffee journal.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -438,9 +438,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Crema Dialed uses the camera to photograph your coffee and bean bags.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Crema Dialed uses photo access so you can attach coffee, cafe, machine, and grinder photos to your personal coffee journal.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Crema Dialed uses your location to find nearby cafes when you check in.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Crema Dialed lets you attach photos of your coffee and cafe visits.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Crema Dialed uses photo access so you can attach coffee, cafe, machine, and grinder photos to your personal coffee journal.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
