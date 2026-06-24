@@ -136,7 +136,11 @@ struct PassportView: View {
                 }
             } else {
                 ForEach(filteredCafes) { cafe in
-                    SwipeToDelete(onDelete: { onDelete(cafe) }) {
+                    SwipeToDelete(
+                        onDelete: { onDelete(cafe) },
+                        confirmTitle: "Delete Café?",
+                        confirmMessage: "This removes the café and all of its check-ins. This action cannot be undone."
+                    ) {
                         NavigationLink(value: cafe.id) { CafeListRow(cafe: cafe) }
                             .buttonStyle(PressableStyle())
                     }

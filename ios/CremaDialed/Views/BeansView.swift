@@ -39,15 +39,27 @@ struct BeansView: View {
                         ScrollView {
                             LazyVStack(spacing: 12) {
                                 ForEach(active) { bean in
-                                    NavigationLink(value: bean) { BeanCard(bean: bean) }
-                                        .buttonStyle(PressableStyle())
+                                    SwipeToDelete(
+                                        onDelete: { deleteBean(bean) },
+                                        confirmTitle: "Delete Bean?",
+                                        confirmMessage: "This removes the bean from your inventory. Past journal entries that used it are kept."
+                                    ) {
+                                        NavigationLink(value: bean) { BeanCard(bean: bean) }
+                                            .buttonStyle(PressableStyle())
+                                    }
                                 }
                                 if !finished.isEmpty {
                                     SectionHeader("Finished")
                                         .padding(.top, 8)
                                     ForEach(finished) { bean in
-                                        NavigationLink(value: bean) { BeanCard(bean: bean).opacity(0.6) }
-                                            .buttonStyle(PressableStyle())
+                                        SwipeToDelete(
+                                            onDelete: { deleteBean(bean) },
+                                            confirmTitle: "Delete Bean?",
+                                            confirmMessage: "This removes the bean from your inventory. Past journal entries that used it are kept."
+                                        ) {
+                                            NavigationLink(value: bean) { BeanCard(bean: bean).opacity(0.6) }
+                                                .buttonStyle(PressableStyle())
+                                        }
                                     }
                                 }
                             }
@@ -75,6 +87,13 @@ struct BeansView: View {
                 }
             }
         }
+    }
+
+    private func deleteBean(_ bean: Bean) {
+        // Brew / DialedRecipe relationships are nullified on delete, so the bean
+        // disappears from inventory while historical journal entries remain.
+        modelContext.delete(bean)
+        HapticEngine.warning()
     }
 }
 

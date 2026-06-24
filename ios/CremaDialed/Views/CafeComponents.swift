@@ -433,11 +433,16 @@ struct NearbyCafeCard: View {
 /// content is swiped left — used for café check-ins in the Passport.
 struct SwipeToDelete<Content: View>: View {
     var onDelete: () -> Void
+    /// When set, tapping the revealed delete action presents a native
+    /// confirmation dialog before `onDelete` fires.
+    var confirmTitle: String? = nil
+    var confirmMessage: String? = nil
     @ViewBuilder var content: () -> Content
 
     @State private var offset: CGFloat = 0
     @State private var revealed = false
     @State private var isHorizontal = false
+    @State private var showConfirm = false
     private let actionWidth: CGFloat = 84
 
     var body: some View {
@@ -445,7 +450,7 @@ struct SwipeToDelete<Content: View>: View {
             Button(role: .destructive) {
                 HapticEngine.warning()
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0; revealed = false }
-                onDelete()
+                if confirmTitle != nil { showConfirm = true } else { onDelete() }
             } label: {
                 Image(systemName: "trash.fill")
                     .font(.crema(18, .bold))
@@ -485,6 +490,12 @@ struct SwipeToDelete<Content: View>: View {
                             }
                         }
                 )
+        }
+        .confirmationDialog(confirmTitle ?? "", isPresented: $showConfirm, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { onDelete() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let confirmMessage { Text(confirmMessage) }
         }
     }
 }

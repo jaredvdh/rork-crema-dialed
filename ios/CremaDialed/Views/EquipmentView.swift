@@ -66,29 +66,35 @@ struct EquipmentView: View {
                 emptyHint("Add your espresso machine to tailor the dial-in tools.")
             } else {
                 ForEach(machines) { machine in
-                    NavigationLink(value: MachineRoute(id: machine.id)) {
-                        CremaCard {
-                            HStack(spacing: 14) {
-                                iconBadge("cup.and.saucer.fill")
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(machine.displayName)
-                                        .font(.crema(16, .bold))
-                                        .foregroundStyle(CremaColor.textPrimary)
-                                    Text("\(machine.boilerType.rawValue) · \(machine.pumpType.rawValue)")
-                                        .font(.crema(13, .medium))
-                                        .foregroundStyle(CremaColor.textSecondary)
-                                    Label("Maintenance & care", systemImage: "wrench.and.screwdriver.fill")
-                                        .font(.crema(12, .semibold))
-                                        .foregroundStyle(CremaColor.caramel)
+                    SwipeToDelete(
+                        onDelete: { deleteMachine(machine) },
+                        confirmTitle: "Delete Machine?",
+                        confirmMessage: "This removes the machine and its maintenance logs. Past journal entries that used it are kept."
+                    ) {
+                        NavigationLink(value: MachineRoute(id: machine.id)) {
+                            CremaCard {
+                                HStack(spacing: 14) {
+                                    iconBadge("cup.and.saucer.fill")
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(machine.displayName)
+                                            .font(.crema(16, .bold))
+                                            .foregroundStyle(CremaColor.textPrimary)
+                                        Text("\(machine.boilerType.rawValue) · \(machine.pumpType.rawValue)")
+                                            .font(.crema(13, .medium))
+                                            .foregroundStyle(CremaColor.textSecondary)
+                                        Label("Maintenance & care", systemImage: "wrench.and.screwdriver.fill")
+                                            .font(.crema(12, .semibold))
+                                            .foregroundStyle(CremaColor.caramel)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.crema(13, .semibold))
+                                        .foregroundStyle(CremaColor.textTertiary)
                                 }
-                                Spacer(minLength: 0)
-                                Image(systemName: "chevron.right")
-                                    .font(.crema(13, .semibold))
-                                    .foregroundStyle(CremaColor.textTertiary)
                             }
                         }
+                        .buttonStyle(PressableStyle())
                     }
-                    .buttonStyle(PressableStyle())
                 }
             }
         }
@@ -103,19 +109,24 @@ struct EquipmentView: View {
                 emptyHint("Add a grinder so the coach can give precise grind advice.")
             } else {
                 ForEach(grinders) { grinder in
-                    CremaCard {
-                        HStack(spacing: 14) {
-                            iconBadge("dial.high.fill")
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(grinder.displayName)
-                                    .font(.crema(16, .bold))
-                                    .foregroundStyle(CremaColor.textPrimary)
-                                Text("\(grinder.kind.rawValue) · \(grinder.burrType.rawValue) \(grinder.burrSizeMM)mm")
-                                    .font(.crema(13, .medium))
-                                    .foregroundStyle(CremaColor.textSecondary)
+                    SwipeToDelete(
+                        onDelete: { deleteGrinder(grinder) },
+                        confirmTitle: "Delete Grinder?",
+                        confirmMessage: "This removes the grinder. Past journal entries that used it are kept."
+                    ) {
+                        CremaCard {
+                            HStack(spacing: 14) {
+                                iconBadge("dial.high.fill")
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(grinder.displayName)
+                                        .font(.crema(16, .bold))
+                                        .foregroundStyle(CremaColor.textPrimary)
+                                    Text("\(grinder.kind.rawValue) · \(grinder.burrType.rawValue) \(grinder.burrSizeMM)mm")
+                                        .font(.crema(13, .medium))
+                                        .foregroundStyle(CremaColor.textSecondary)
+                                }
+                                Spacer(minLength: 0)
                             }
-                            Spacer(minLength: 0)
-                            deleteButton { modelContext.delete(grinder) }
                         }
                     }
                 }
@@ -225,14 +236,18 @@ struct EquipmentView: View {
         }
     }
 
-    private func deleteButton(_ action: @escaping () -> Void) -> some View {
-        Button {
-            HapticEngine.warning(); action()
-        } label: {
-            Image(systemName: "trash")
-                .font(.crema(15))
-                .foregroundStyle(CremaColor.textTertiary)
-        }
+    private func deleteMachine(_ machine: Machine) {
+        // Brew / DialedRecipe relationships are nullified, maintenance logs and
+        // reminders cascade. Journal history that referenced this machine is kept.
+        modelContext.delete(machine)
+        HapticEngine.warning()
+    }
+
+    private func deleteGrinder(_ grinder: Grinder) {
+        // Brew / DialedRecipe relationships are nullified, so journal history is
+        // preserved while the grinder is removed.
+        modelContext.delete(grinder)
+        HapticEngine.warning()
     }
 
     private func emptyHint(_ text: String) -> some View {

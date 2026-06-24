@@ -89,7 +89,11 @@ final class PlayerUIView: UIView {
         // blocks the UI. The looping item is attached once the asset is ready.
         let asset = AVURLAsset(url: url)
         Task.detached(priority: .userInitiated) { [weak self] in
-            _ = try? await asset.load(.isPlayable, .tracks)
+            // Defensively confirm the clip is actually playable before wiring up
+            // the looping player. A corrupt/missing track must not crash the
+            // extraction screen — the dark backdrop simply remains.
+            let isPlayable = (try? await asset.load(.isPlayable)) ?? false
+            guard isPlayable else { return }
             await MainActor.run {
                 guard let self else { return }
                 let item = AVPlayerItem(asset: asset)

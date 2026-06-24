@@ -17,7 +17,11 @@ struct BrewTimerView: View {
     var onFinish: (Double) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var appeared = false
+    /// Guards against the final result being saved more than once (e.g. a
+    /// double-tap on "Save Shot Time").
+    @State private var didSave = false
 
     init(timer: BrewTimer, dose: Double, yield: Double, onFinish: @escaping (Double) -> Void) {
         self._timer = Bindable(timer)
@@ -30,7 +34,7 @@ struct BrewTimerView: View {
 
     var body: some View {
         ZStack {
-            ExtractionVideoView(isFlowing: timer.phase == .extracting)
+            ExtractionVideoView(isFlowing: timer.phase == .extracting && scenePhase == .active)
 
             switch timer.phase {
             case .ready: readyOverlay
@@ -41,6 +45,12 @@ struct BrewTimerView: View {
         .statusBarHidden(true)
         .preferredColorScheme(.dark)
         .onAppear { withAnimation(.easeOut(duration: 0.6)) { appeared = true } }
+        .onChange(of: scenePhase) { _, newPhase in
+            // Returning from background: realign the timer to wall-clock time so
+            // the elapsed reading is correct even though the tick publisher was
+            // suspended while the app was inactive.
+            if newPhase == .active { timer.refreshFromClock() }
+        }
     }
 
     // MARK: Ready — wait for first drip
@@ -156,11 +166,14 @@ struct BrewTimerView: View {
 
             VStack(spacing: 12) {
                 bigButton(title: "Save Shot Time", systemImage: "checkmark", tint: warmGold) {
+                    guard !didSave else { return }
+                    didSave = true
                     onFinish((timer.elapsed * 10).rounded() / 10)
                     dismiss()
                 }
                 Button {
                     HapticEngine.light()
+                    didSave = false
                     timer.reset()
                 } label: {
                     Text("Pull Again")

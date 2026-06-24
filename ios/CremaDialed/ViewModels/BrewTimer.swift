@@ -115,13 +115,25 @@ final class BrewTimer {
         if new != stage { stage = new }
     }
 
-    /// Freeze the timer and present results.
+    /// Freeze the timer and present results. Guarded so repeated Stop taps are
+    /// idempotent and never fire duplicate save/result events.
     func stop() {
         guard phase == .extracting else { return }
         phase = .finished
+        if let ref = startReference { elapsed = Date().timeIntervalSince(ref) }
         startReference = nil
         timer?.cancel()
+        timer = nil
         HapticEngine.warning()
+    }
+
+    /// Recompute elapsed from the wall-clock reference. Called when the app
+    /// returns to the foreground so the timer stays accurate across
+    /// backgrounding (the tick publisher is suspended while backgrounded).
+    func refreshFromClock() {
+        guard phase == .extracting, let ref = startReference else { return }
+        elapsed = Date().timeIntervalSince(ref)
+        updateStage()
     }
 
     /// Re-arm for a fresh shot.
@@ -133,6 +145,7 @@ final class BrewTimer {
         didReachGolden = false
         startReference = nil
         timer?.cancel()
+        timer = nil
     }
 
     /// Load golden-recipe targets to personalise the extraction screen.

@@ -7,6 +7,7 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Brew.date, order: .reverse) private var brews: [Brew]
     @State private var search = ""
     @State private var minRating = 0
@@ -49,8 +50,14 @@ struct HistoryView: View {
                                         .font(.crema(14, .bold))
                                         .foregroundStyle(CremaColor.textSecondary)
                                     ForEach(items) { brew in
-                                        NavigationLink(value: brew) { BrewRow(brew: brew) }
-                                            .buttonStyle(PressableStyle())
+                                        SwipeToDelete(
+                                            onDelete: { deleteBrew(brew) },
+                                            confirmTitle: "Delete Journal Entry?",
+                                            confirmMessage: "This action cannot be undone."
+                                        ) {
+                                            NavigationLink(value: brew) { BrewRow(brew: brew) }
+                                                .buttonStyle(PressableStyle())
+                                        }
                                     }
                                 }
                             }
@@ -73,6 +80,15 @@ struct HistoryView: View {
             }
             .sheet(isPresented: $showInsights) { InsightsView() }
         }
+    }
+
+    private func deleteBrew(_ brew: Brew) {
+        // Deleting the shot removes it everywhere it appears (journal, insights,
+        // bean history, recent activity) because those surfaces all read from
+        // the same live SwiftData store. Relationships are nullified, so the
+        // bean / machine / grinder it referenced are preserved.
+        modelContext.delete(brew)
+        HapticEngine.warning()
     }
 
     private var filterBar: some View {
