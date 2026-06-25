@@ -80,9 +80,9 @@ struct AboutView: View {
         VStack(spacing: 12) {
             sectionTitle("Legal")
             linkRow("Privacy Policy", icon: "lock.fill",
-                    url: URL(string: "https://cremadialed.app/privacy"))
+                    url: URL(string: "https://www-cremadialed-app.rork.app/#privacy"))
             linkRow("Terms of Service", icon: "doc.text.fill",
-                    url: URL(string: "https://cremadialed.app/terms"))
+                    url: URL(string: "https://www-cremadialed-app.rork.app/#terms"))
         }
     }
 
